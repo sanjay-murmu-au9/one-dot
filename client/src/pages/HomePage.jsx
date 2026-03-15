@@ -20,11 +20,11 @@ const HERO_ITEMS = [
 ]
 
 const TRENDING_WALLPAPERS = [
-  { ...WALLPAPER_STYLES[0], name: 'Mountain Grid', bgImage: '/trending/mountain.png' },
-  { ...WALLPAPER_STYLES[1], name: 'Baby Countdown', bgImage: '/trending/baby.png' },
-  { ...WALLPAPER_STYLES[3], name: 'Minimal Tokyo', bgImage: '/trending/urban.png' },
-  { ...WALLPAPER_STYLES[4], name: 'Cat Calendar', bgImage: '/trending/cat.png' },
-  { ...WALLPAPER_STYLES[5], name: 'Nature Stoic', bgImage: '/trending/nature.png' },
+  { ...WALLPAPER_STYLES[0], name: 'Mountain Grid', bgImage: `${import.meta.env.BASE_URL}trending/mountain.png` },
+  { ...WALLPAPER_STYLES[1], name: 'Baby Countdown', bgImage: `${import.meta.env.BASE_URL}trending/baby.png` },
+  { ...WALLPAPER_STYLES[3], name: 'Minimal Tokyo', bgImage: `${import.meta.env.BASE_URL}trending/urban.png` },
+  { ...WALLPAPER_STYLES[4], name: 'Cat Calendar', bgImage: `${import.meta.env.BASE_URL}trending/cat.png` },
+  { ...WALLPAPER_STYLES[5], name: 'Nature Stoic', bgImage: `${import.meta.env.BASE_URL}trending/nature.png` },
 ]
 
 export default function HomePage() {
