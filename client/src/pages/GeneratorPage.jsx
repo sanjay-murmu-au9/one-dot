@@ -31,6 +31,13 @@ export default function GeneratorPage() {
   const [generating, setGenerating]       = useState(false)
   const [downloaded, setDownloaded]       = useState(false)
 
+  // Memento Mori specific options
+  const [mmQuote, setMmQuote]         = useState('MEMENTO MORI')
+  const [mmShape, setMmShape]         = useState('square')
+  const [mmDensity, setMmDensity]     = useState('year')
+  const [mmBirthYear, setMmBirthYear] = useState(new Date().getFullYear() - 25)
+  const [mmColor, setMmColor]         = useState('#94a3b8')
+
   // Extract background from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -42,15 +49,16 @@ export default function GeneratorPage() {
   const desktopPreviewRef = useRef(null)
   const downloadCanvasRef = useRef(null)
 
-  const drawFn   = DRAW_FUNCTIONS[selectedStyle]
-  const accent   = STYLE_ACCENTS[selectedStyle]
-  const res      = RESOLUTIONS[resolution]
-  const daysLeft = getDaysLeft(targetDate)
+  const drawFn       = DRAW_FUNCTIONS[selectedStyle]
+  const accent       = STYLE_ACCENTS[selectedStyle]
+  const res          = RESOLUTIONS[resolution]
+  const daysLeft     = getDaysLeft(targetDate)
+  const activeAccent = selectedStyle === 'memento-mori' ? mmColor : accent
+  const mmOpts       = { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear }
 
   const PREVIEW_W = 176
   const PREVIEW_H = 360
 
-  // Render preview canvas
   const renderPreview = useCallback(() => {
     [mobilePreviewRef, desktopPreviewRef].forEach(ref => {
       const canvas = ref.current
@@ -59,43 +67,36 @@ export default function GeneratorPage() {
       canvas.height = PREVIEW_H * 2
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      
+      const opts = selectedStyle === 'memento-mori' ? { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear } : undefined
       if (backgroundImage) {
         const img = new Image()
         img.src = backgroundImage
-        img.onload = () => {
-          drawFn(ctx, canvas.width, canvas.height, daysLeft, accent, img)
-        }
+        img.onload = () => drawFn(ctx, canvas.width, canvas.height, daysLeft, activeAccent, img, opts)
       } else {
-        drawFn(ctx, canvas.width, canvas.height, daysLeft, accent)
+        drawFn(ctx, canvas.width, canvas.height, daysLeft, activeAccent, null, opts)
       }
     })
-  }, [drawFn, daysLeft, accent, PREVIEW_W, PREVIEW_H, backgroundImage])
+  }, [drawFn, daysLeft, activeAccent, backgroundImage, selectedStyle, mmQuote, mmShape, mmDensity, mmBirthYear])
 
   useEffect(() => { renderPreview() }, [renderPreview])
 
-  // Update document title for SEO
   useEffect(() => {
-    const styleInfo = WALLPAPER_STYLES.find(s => s.id === selectedStyle);
-    if (styleInfo) {
-      document.title = `Customize ${styleInfo.name} — one dot`;
-    }
-  }, [selectedStyle]);
+    const styleInfo = WALLPAPER_STYLES.find(s => s.id === selectedStyle)
+    if (styleInfo) document.title = `Customize ${styleInfo.name} — one dot`
+  }, [selectedStyle])
 
   const handleDownload = () => {
     setGenerating(true)
-    
-    const triggerDesktopDownload = (canvas) => {
+    const triggerDownload = (canvas) => {
       const url = canvas.toDataURL('image/png')
-      const a   = document.createElement('a')
-      a.href     = url
+      const a = document.createElement('a')
+      a.href = url
       a.download = `one-countdown-${selectedStyle}-${targetDate}.png`
       a.click()
       setGenerating(false)
       setDownloaded(true)
       setTimeout(() => setDownloaded(false), 3000)
     }
-
     setTimeout(() => {
       const canvas = downloadCanvasRef.current
       if (!canvas) return setGenerating(false)
@@ -103,30 +104,21 @@ export default function GeneratorPage() {
       canvas.height = res.h
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, res.w, res.h)
-      
+      const opts = selectedStyle === 'memento-mori' ? { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear } : undefined
       if (backgroundImage) {
         const img = new Image()
         img.src = backgroundImage
-        img.onload = () => {
-          drawFn(ctx, res.w, res.h, daysLeft, accent, img)
-          triggerDesktopDownload(canvas)
-        }
+        img.onload = () => { drawFn(ctx, res.w, res.h, daysLeft, activeAccent, img, opts); triggerDownload(canvas) }
       } else {
-        drawFn(ctx, res.w, res.h, daysLeft, accent)
-        triggerDesktopDownload(canvas)
+        drawFn(ctx, res.w, res.h, daysLeft, activeAccent, null, opts)
+        triggerDownload(canvas)
       }
     }, 500)
   }
 
-  const styleInfo = WALLPAPER_STYLES.find(s => s.id === selectedStyle)
-
-  const dateLabel = (() => {
-    if (daysLeft > 0) return `${daysLeft} days from today`
-    if (daysLeft === 0) return 'Today!'
-    return `${Math.abs(daysLeft)} days ago`
-  })()
-
-  const dateFocus = useFocus()
+  const styleInfo  = WALLPAPER_STYLES.find(s => s.id === selectedStyle)
+  const dateLabel  = daysLeft > 0 ? `${daysLeft} days from today` : daysLeft === 0 ? 'Today!' : `${Math.abs(daysLeft)} days ago`
+  const dateFocus  = useFocus()
 
   return (
     <main className="min-h-screen pt-24 pb-20">
@@ -173,7 +165,7 @@ export default function GeneratorPage() {
               {/* Subtle shadow glow behind phone */}
               <div 
                 className="absolute inset-0 blur-[60px] opacity-20" 
-                style={{ background: accent, transform: 'scale(1.5)' }}
+                style={{ background: activeAccent, transform: 'scale(1.5)' }}
               />
               <div
                 className={`phone-mockup relative z-10 ${
@@ -195,7 +187,7 @@ export default function GeneratorPage() {
                     }}
                   />
                   {/* Real mobile UI elements - Color Synced */}
-                  <PhoneUIOverlay isSmall={true} color={accent} />
+                  <PhoneUIOverlay isSmall={true} color={activeAccent} />
                 </div>
                 {/* Physical Hardware Buttons */}
                 <PhoneSideButtons isBanner={false} />
@@ -253,6 +245,126 @@ export default function GeneratorPage() {
                 })}
               </div>
             </div>
+
+            {/* Memento Mori specific controls */}
+            {selectedStyle === 'memento-mori' && (
+              <div className="card-minimal border-t pt-4" style={{ borderColor: '#e8e8ed' }}>
+                <h2 className="font-bold text-[13px] uppercase tracking-wider mb-4" style={{ color: '#86868b' }}>
+                  Memento Mori Options
+                </h2>
+
+                <div className="space-y-5">
+
+                  {/* Grid Density */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Grid Mode</label>
+                    <div className="flex gap-2">
+                      {[{ v: 'year', label: '52 Weeks', sub: 'This year' }, { v: 'life', label: 'Lifetime', sub: '90yr · 4,680 weeks' }].map(opt => (
+                        <button
+                          key={opt.v}
+                          onClick={() => setMmDensity(opt.v)}
+                          className="flex-1 flex flex-col items-center py-3 px-2 rounded-xl border text-sm transition-all"
+                          style={{
+                            borderColor: mmDensity === opt.v ? '#ff5f45' : '#e8e8ed',
+                            background: mmDensity === opt.v ? 'rgba(255,95,69,0.04)' : '#fff',
+                            boxShadow: mmDensity === opt.v ? '0 0 0 3px rgba(255,95,69,0.1)' : 'none',
+                          }}
+                        >
+                          <span className="font-semibold text-[13px]" style={{ color: '#1d1d1f' }}>{opt.label}</span>
+                          <span className="text-[11px] mt-0.5" style={{ color: '#a1a1a6' }}>{opt.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Birth Year (only for lifetime mode) */}
+                  {mmDensity === 'life' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Birth Year</label>
+                      <input
+                        type="number"
+                        min="1920"
+                        max={new Date().getFullYear() - 1}
+                        value={mmBirthYear}
+                        onChange={e => setMmBirthYear(e.target.value)}
+                        className={INPUT_CLS}
+                        style={{ ...INPUT_STYLE, colorScheme: 'light' }}
+                        placeholder="e.g. 1995"
+                      />
+                      <p className="mt-1.5 text-xs" style={{ color: '#a1a1a6' }}>
+                        Age {new Date().getFullYear() - mmBirthYear} · {Math.round(((new Date().getFullYear() - mmBirthYear) * 52) / (90 * 52) * 100)}% of life lived
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Dot Shape */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Dot Shape</label>
+                    <div className="flex gap-2">
+                      {[{ v: 'square', icon: '▪', label: 'Square' }, { v: 'circle', icon: '●', label: 'Circle' }].map(opt => (
+                        <button
+                          key={opt.v}
+                          onClick={() => setMmShape(opt.v)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all"
+                          style={{
+                            borderColor: mmShape === opt.v ? '#ff5f45' : '#e8e8ed',
+                            background: mmShape === opt.v ? 'rgba(255,95,69,0.04)' : '#fff',
+                            boxShadow: mmShape === opt.v ? '0 0 0 3px rgba(255,95,69,0.1)' : 'none',
+                            color: '#1d1d1f',
+                          }}
+                        >
+                          <span>{opt.icon}</span> {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Accent Color</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {[
+                        { color: '#94a3b8', name: 'Slate' },
+                        { color: '#f87171', name: 'Red' },
+                        { color: '#fbbf24', name: 'Gold' },
+                        { color: '#a78bfa', name: 'Purple' },
+                        { color: '#34d399', name: 'Emerald' },
+                        { color: '#60a5fa', name: 'Blue' },
+                        { color: '#f472b6', name: 'Pink' },
+                        { color: '#ffffff', name: 'White' },
+                      ].map(({ color, name }) => (
+                        <button
+                          key={color}
+                          title={name}
+                          onClick={() => setMmColor(color)}
+                          className="w-8 h-8 rounded-full transition-all hover:scale-110"
+                          style={{
+                            background: color,
+                            boxShadow: mmColor === color ? `0 0 0 2px #fff, 0 0 0 4px #ff5f45` : '0 0 0 1px rgba(0,0,0,0.1)',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Quote */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Custom Quote</label>
+                    <input
+                      type="text"
+                      maxLength={40}
+                      value={mmQuote}
+                      onChange={e => setMmQuote(e.target.value)}
+                      className={INPUT_CLS}
+                      style={{ ...INPUT_STYLE, colorScheme: 'light' }}
+                      placeholder="MEMENTO MORI"
+                    />
+                    <p className="mt-1.5 text-xs" style={{ color: '#a1a1a6' }}>{mmQuote.length}/40 characters</p>
+                  </div>
+
+                </div>
+              </div>
+            )}
 
             {/* Date & Resolution */}
             <div className="card-minimal">
@@ -394,7 +506,7 @@ export default function GeneratorPage() {
                {/* Subtle shadow glow behind phone */}
                <div 
                 className="absolute inset-0 blur-3xl opacity-15" 
-                style={{ background: accent, transform: 'scale(1.3)' }}
+                style={{ background: activeAccent, transform: 'scale(1.3)' }}
               />
               {/* Device frame preview */}
               <div
@@ -417,7 +529,7 @@ export default function GeneratorPage() {
                     }}
                   />
                   {/* Real mobile UI elements - Color Synced */}
-                  <PhoneUIOverlay isSmall={false} isBanner={true} color={accent} />
+                  <PhoneUIOverlay isSmall={false} isBanner={true} color={activeAccent} />
                 </div>
                 {/* Physical Hardware Buttons */}
                 <PhoneSideButtons isBanner={true} />

@@ -296,7 +296,14 @@ function drawCarpeDiem(ctx, w, h, daysLeft, accent, bgImage) {
 }
 
 // ── MEMENTO MORI ────────────────────────────────────────────────────
-function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage) {
+function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
+  const {
+    quote = 'M E M E N T O  M O R I',
+    shape = 'square',       // 'square' | 'circle'
+    density = 'year',       // 'year' | 'life'
+    birthYear = null,
+  } = opts
+
   if (bgImage) {
     drawBackground(ctx, w, h, [], bgImage)
   } else {
@@ -304,35 +311,87 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage) {
     ctx.fillRect(0, 0, w, h)
   }
 
-  const total   = 52
-  const pastWks = Math.max(0, Math.min(total, Math.round((1 - daysLeft / 365) * total)))
-  const cols    = 13
-  const boxW    = w * 0.046, boxH = w * 0.046
-  const gapX    = w * 0.018
-  const gapY    = w * 0.022
-  const gw      = cols * boxW + (cols - 1) * gapX
-  const ox      = (w - gw) / 2
-  const oy      = h * 0.44
+  // Subtle vignette
+  const vig = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.85)
+  vig.addColorStop(0, 'transparent')
+  vig.addColorStop(1, 'rgba(0,0,0,0.55)')
+  ctx.fillStyle = vig
+  ctx.fillRect(0, 0, w, h)
 
-  ctx.textAlign = 'center'
-  setFont(ctx, '200', w * 0.038)
-  ctx.fillStyle = 'rgba(255,255,255,0.18)'
-  ctx.fillText('M E M E N T O  M O R I', w / 2, h * 0.43)
+  const isLife = density === 'life' && birthYear
+  const currentYear = new Date().getFullYear()
+  const now = new Date()
+  const startOfYear = new Date(currentYear, 0, 1)
+  const currentWeek = Math.floor((now - startOfYear) / (7 * 24 * 60 * 60 * 1000))
+
+  let total, pastWks
+  if (isLife) {
+    const age = currentYear - parseInt(birthYear)
+    const weeksLived = age * 52 + currentWeek
+    total = 90 * 52
+    pastWks = Math.min(weeksLived, total)
+  } else {
+    total = 52
+    pastWks = Math.min(currentWeek, 52)
+  }
+
+  // Grid layout
+  const cols = isLife ? 52 : 13
+  const rows = Math.ceil(total / cols)
+  const padding = w * 0.06
+  const availW = w - padding * 2
+  const gap = isLife ? w * 0.004 : w * 0.018
+  const boxW = (availW - gap * (cols - 1)) / cols
+  const boxH = isLife ? boxW : w * 0.046
+  const gapY = isLife ? gap : w * 0.022
+  const gridH = rows * boxH + (rows - 1) * gapY
+  const ox = padding
+  const oy = h * 0.56 - gridH / 2
 
   for (let i = 0; i < total; i++) {
     const col = i % cols
     const row = Math.floor(i / cols)
-    const x   = ox + col * (boxW + gapX)
-    const y   = oy + row * (boxH + gapY) + h * 0.07 // Shifted down
-    ctx.fillStyle = i < pastWks ? accent : 'rgba(255,255,255,0.07)'
-    ctx.beginPath()
-    ctx.roundRect(x, y, boxW, boxH, 3)
-    ctx.fill()
+    const x = ox + col * (boxW + gap)
+    const y = oy + row * (boxH + gapY)
+    const filled = i < pastWks
+
+    ctx.fillStyle = filled ? accent : 'rgba(255,255,255,0.07)'
+
+    if (shape === 'circle') {
+      const r = Math.min(boxW, boxH) / 2
+      ctx.beginPath()
+      ctx.arc(x + boxW / 2, y + boxH / 2, r, 0, Math.PI * 2)
+      ctx.fill()
+    } else {
+      ctx.beginPath()
+      ctx.roundRect(x, y, boxW, boxH, isLife ? 1 : 3)
+      ctx.fill()
+    }
   }
 
-  setFont(ctx, '300', w * 0.034)
-  ctx.fillStyle = 'rgba(255,255,255,0.16)'
-  ctx.fillText('weeks of the year', w / 2, h * 0.75)
+  // Title / quote
+  ctx.textAlign = 'center'
+  const titleY = oy - h * 0.06
+  setFont(ctx, '200', w * (isLife ? 0.028 : 0.038))
+  ctx.fillStyle = accent + 'cc'
+  ctx.fillText(quote.toUpperCase(), w / 2, titleY)
+
+  // Stats below grid
+  const statsY = oy + gridH + h * 0.04
+  if (isLife) {
+    const age = currentYear - parseInt(birthYear)
+    const weeksLeft = total - pastWks
+    setFont(ctx, '300', w * 0.03)
+    ctx.fillStyle = accent + 'cc'
+    ctx.fillText(`${pastWks.toLocaleString()} weeks lived · ${weeksLeft.toLocaleString()} remaining`, w / 2, statsY)
+    setFont(ctx, '200', w * 0.026)
+    ctx.fillStyle = 'rgba(255,255,255,0.14)'
+    ctx.fillText(`age ${age} · ${Math.round((pastWks / total) * 100)}% of 90 years`, w / 2, statsY + h * 0.035)
+  } else {
+    setFont(ctx, '300', w * 0.034)
+    ctx.fillStyle = 'rgba(255,255,255,0.16)'
+    ctx.fillText('weeks of the year', w / 2, statsY)
+  }
 }
 
 // ── WEEKLY GRID ─────────────────────────────────────────────────────
