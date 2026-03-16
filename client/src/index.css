@@ -304,6 +304,19 @@ input[type="date"], select {
   box-shadow: 0 8px 16px rgba(255,95,69,0.1);
 }
 
+/* ── Memento Mori current week pulse ───────────────── */
+@keyframes mm-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(2); }
+}
+.mm-pulse-ring {
+  position: absolute;
+  border-radius: 3px;
+  pointer-events: none;
+  animation: mm-pulse 1.8s ease-in-out infinite;
+  z-index: 30;
+}
+
 /* ── Overlay "Try it" on phone hover ───────────────── */
 .phone-try-overlay {
   position: absolute;

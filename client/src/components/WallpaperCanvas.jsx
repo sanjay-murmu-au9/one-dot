@@ -354,20 +354,54 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     const x = ox + col * (boxW + gap)
     const y = oy + row * (boxH + gapY)
     const filled = i < pastWks
+    const isCurrent = i === pastWks // current running week
 
-    ctx.fillStyle = filled ? accent : 'rgba(255,255,255,0.07)'
-
-    if (shape === 'circle') {
-      const r = Math.min(boxW, boxH) / 2
-      ctx.beginPath()
-      ctx.arc(x + boxW / 2, y + boxH / 2, r, 0, Math.PI * 2)
-      ctx.fill()
+    if (isCurrent) {
+      // Bright pulsing current week — drawn with full accent + glow ring
+      ctx.fillStyle = accent
+      ctx.globalAlpha = 1
+      if (shape === 'circle') {
+        const r = Math.min(boxW, boxH) / 2
+        // Outer glow ring
+        ctx.beginPath()
+        ctx.arc(x + boxW / 2, y + boxH / 2, r * 2, 0, Math.PI * 2)
+        const glow = ctx.createRadialGradient(x + boxW/2, y + boxH/2, r * 0.5, x + boxW/2, y + boxH/2, r * 2)
+        glow.addColorStop(0, accent + '66')
+        glow.addColorStop(1, 'transparent')
+        ctx.fillStyle = glow
+        ctx.fill()
+        // Main dot
+        ctx.beginPath()
+        ctx.arc(x + boxW / 2, y + boxH / 2, r, 0, Math.PI * 2)
+        ctx.fillStyle = '#ffffff'
+        ctx.fill()
+      } else {
+        // Outer glow
+        ctx.shadowColor = accent
+        ctx.shadowBlur = isLife ? 4 : 10
+        ctx.beginPath()
+        ctx.roundRect(x - 1, y - 1, boxW + 2, boxH + 2, isLife ? 2 : 4)
+        ctx.fillStyle = '#ffffff'
+        ctx.fill()
+        ctx.shadowBlur = 0
+        ctx.shadowColor = 'transparent'
+      }
     } else {
-      ctx.beginPath()
-      ctx.roundRect(x, y, boxW, boxH, isLife ? 1 : 3)
-      ctx.fill()
+      ctx.fillStyle = filled ? accent : 'rgba(255,255,255,0.07)'
+      ctx.globalAlpha = filled ? 1 : 1
+      if (shape === 'circle') {
+        const r = Math.min(boxW, boxH) / 2
+        ctx.beginPath()
+        ctx.arc(x + boxW / 2, y + boxH / 2, r, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(x, y, boxW, boxH, isLife ? 1 : 3)
+        ctx.fill()
+      }
     }
   }
+  ctx.globalAlpha = 1
 
   // Title / quote
   ctx.textAlign = 'center'
@@ -457,6 +491,46 @@ function drawWeeklyGrid(ctx, w, h, daysLeft, accent, bgImage) {
 }
 
 // ── Export ──────────────────────────────────────────────────────────
+// Returns pixel position of current week box for pulse overlay
+export function getMementoCurrentWeekPos(canvasW, canvasH, density, birthYear) {
+  const currentYear = new Date().getFullYear()
+  const now = new Date()
+  const startOfYear = new Date(currentYear, 0, 1)
+  const currentWeek = Math.floor((now - startOfYear) / (7 * 24 * 60 * 60 * 1000))
+
+  const isLife = density === 'life' && birthYear
+  let pastWks, total
+  if (isLife) {
+    const age = currentYear - parseInt(birthYear)
+    total = 90 * 52
+    pastWks = Math.min(age * 52 + currentWeek, total)
+  } else {
+    total = 52
+    pastWks = Math.min(currentWeek, 52)
+  }
+
+  const cols = isLife ? 52 : 13
+  const rows = Math.ceil(total / cols)
+  const padding = canvasW * 0.06
+  const availW = canvasW - padding * 2
+  const gap = isLife ? canvasW * 0.004 : canvasW * 0.018
+  const boxW = (availW - gap * (cols - 1)) / cols
+  const boxH = isLife ? boxW : canvasW * 0.046
+  const gapY = isLife ? gap : canvasW * 0.022
+  const gridH = rows * boxH + (rows - 1) * gapY
+  const ox = padding
+  const oy = canvasH * 0.56 - gridH / 2
+
+  const col = pastWks % cols
+  const row = Math.floor(pastWks / cols)
+  return {
+    x: ox + col * (boxW + gap),
+    y: oy + row * (boxH + gapY),
+    w: boxW,
+    h: boxH,
+  }
+}
+
 export const DRAW_FUNCTIONS = {
   'dot-grid':       drawDotGrid,
   'large-countdown':drawLargeCountdown,

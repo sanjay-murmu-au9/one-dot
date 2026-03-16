@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
-import { RESOLUTIONS, DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft } from '../components/WallpaperCanvas'
+import { RESOLUTIONS, DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, getMementoCurrentWeekPos } from '../components/WallpaperCanvas'
 import { WALLPAPER_STYLES, PhoneUIOverlay, PhoneSideButtons } from '../components/PhoneCard'
 
 const DEFAULT_DATE = (() => {
@@ -186,6 +186,23 @@ export default function GeneratorPage() {
                       objectFit: 'cover',
                     }}
                   />
+                  {selectedStyle === 'memento-mori' && (() => {
+                    const pos = getMementoCurrentWeekPos(PREVIEW_W * 2, PREVIEW_H * 2, mmDensity, mmBirthYear)
+                    const scaleX = 130 / (PREVIEW_W * 2)
+                    const scaleY = 266 / (PREVIEW_H * 2)
+                    return (
+                      <div
+                        className="mm-pulse-ring"
+                        style={{
+                          left: pos.x * scaleX,
+                          top: pos.y * scaleY,
+                          width: pos.w * scaleX,
+                          height: pos.h * scaleY,
+                          background: activeAccent + '99',
+                        }}
+                      />
+                    )
+                  })()}
                   {/* Real mobile UI elements - Color Synced */}
                   <PhoneUIOverlay isSmall={true} color={activeAccent} />
                 </div>
@@ -528,6 +545,23 @@ export default function GeneratorPage() {
                       objectFit: 'cover',
                     }}
                   />
+                  {selectedStyle === 'memento-mori' && (() => {
+                    const pos = getMementoCurrentWeekPos(PREVIEW_W * 2, PREVIEW_H * 2, mmDensity, mmBirthYear)
+                    const scaleX = 280 / (PREVIEW_W * 2)
+                    const scaleY = 572 / (PREVIEW_H * 2)
+                    return (
+                      <div
+                        className="mm-pulse-ring"
+                        style={{
+                          left: pos.x * scaleX,
+                          top: pos.y * scaleY,
+                          width: pos.w * scaleX,
+                          height: pos.h * scaleY,
+                          background: activeAccent + '99',
+                        }}
+                      />
+                    )
+                  })()}
                   {/* Real mobile UI elements - Color Synced */}
                   <PhoneUIOverlay isSmall={false} isBanner={true} color={activeAccent} />
                 </div>
