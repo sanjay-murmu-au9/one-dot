@@ -91,7 +91,21 @@ function WallpaperThumb({ styleId, width = 200, height = 430, bgImage }) {
   )
 }
 
-export function PhoneUIOverlay({ isSmall = true, isBanner = false, time = "11:44", date = "Mon Feb 16", color = "white" }) {
+export function PhoneUIOverlay({ isSmall = true, isBanner = false, color = "white", randomize = false }) {
+  const now = new Date()
+  let time, date
+  if (randomize) {
+    const h = Math.floor(Math.random() * 12) + 1
+    const m = Math.floor(Math.random() * 60).toString().padStart(2, '0')
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const d = Math.floor(Math.random() * 28) + 1
+    time = `${h}:${m}`
+    date = `${days[Math.floor(Math.random() * 7)]} ${months[Math.floor(Math.random() * 12)]} ${d}`
+  } else {
+    time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
+    date = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
   const padding = isBanner ? 'p-6 pb-4' : 'p-[11px] pb-3'
   const timeSize = isBanner ? 'text-[15px]' : 'text-[10px]'
   const actionSize = isBanner ? 'w-11 h-11' : 'w-9.5 h-9.5'
@@ -283,8 +297,7 @@ export default function PhoneCard({ style, floatClass = 'animate-float' }) {
           <PhoneUIOverlay 
             isSmall={true} 
             color={STYLE_ACCENTS[style.id] || "white"}
-            time={`${(style.id.length % 12) + 1}:${(style.id.length * 13) % 60 < 10 ? '0' : ''}${(style.id.length * 13) % 60}`}
-            date={style.id === 'yearly-view' ? "Year 2026" : "Mon Feb 16"}
+            randomize={true}
           />
         </div>
 
