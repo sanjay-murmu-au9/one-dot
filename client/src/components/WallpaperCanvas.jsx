@@ -422,9 +422,9 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     ctx.fillStyle = 'rgba(255,255,255,0.14)'
     ctx.fillText(`age ${age} · ${Math.round((pastWks / total) * 100)}% of 90 years`, w / 2, statsY + h * 0.035)
   } else {
-    setFont(ctx, '300', w * 0.034)
-    ctx.fillStyle = 'rgba(255,255,255,0.16)'
-    ctx.fillText('weeks of the year', w / 2, statsY)
+    setFont(ctx, '400', w * 0.042)
+    ctx.fillStyle = accent + 'cc'
+    ctx.fillText(`week ${currentWeek} of 52 · ${currentYear}`, w / 2, statsY)
   }
 }
 
