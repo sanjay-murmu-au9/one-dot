@@ -299,9 +299,10 @@ function drawCarpeDiem(ctx, w, h, daysLeft, accent, bgImage) {
 function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
   const {
     quote = 'M E M E N T O  M O R I',
-    shape = 'square',       // 'square' | 'circle'
-    density = 'year',       // 'year' | 'life'
+    shape = 'square',
+    density = 'year',
     birthYear = null,
+    achieved = false,
   } = opts
 
   if (bgImage) {
@@ -354,29 +355,71 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     const x = ox + col * (boxW + gap)
     const y = oy + row * (boxH + gapY)
     const filled = i < pastWks
-    const isCurrent = i === pastWks // current running week
+    const isCurrent = i === pastWks
 
-    if (isCurrent) {
-      // Bright pulsing current week — drawn with full accent + glow ring
-      ctx.fillStyle = accent
-      ctx.globalAlpha = 1
+    // Calculate goal week index
+    const goalDate = new Date()
+    goalDate.setDate(goalDate.getDate() + daysLeft)
+    const goalYear = goalDate.getFullYear()
+    const goalWeekOfYear = Math.floor((goalDate - new Date(goalYear, 0, 1)) / (7 * 24 * 60 * 60 * 1000))
+    let goalIndex
+    if (isLife) {
+      const goalAge = goalYear - parseInt(birthYear)
+      goalIndex = goalAge * 52 + goalWeekOfYear
+    } else {
+      goalIndex = goalWeekOfYear
+    }
+    const isGoal = i === Math.min(goalIndex, total - 1)
+
+    if (isGoal && !isCurrent) {
+      // Goal week — coral filled box with label
+      ctx.fillStyle = '#ff5f45'
+      ctx.shadowColor = '#ff5f45'
+      ctx.shadowBlur = isLife ? 6 : 14
       if (shape === 'circle') {
         const r = Math.min(boxW, boxH) / 2
-        // Outer glow ring
         ctx.beginPath()
-        ctx.arc(x + boxW / 2, y + boxH / 2, r * 2, 0, Math.PI * 2)
+        ctx.arc(x + boxW / 2, y + boxH / 2, r, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        ctx.beginPath()
+        ctx.roundRect(x, y, boxW, boxH, isLife ? 1 : 3)
+        ctx.fill()
+      }
+      ctx.shadowBlur = 0
+      ctx.shadowColor = 'transparent'
+      // "GOAL" label above the box (only in year mode, enough space)
+      if (!isLife) {
+        setFont(ctx, '600', w * 0.022)
+        ctx.fillStyle = '#ff5f45'
+        ctx.textAlign = 'center'
+        ctx.fillText('GOAL', x + boxW / 2, y - w * 0.01)
+      }
+      // Strikethrough when achieved
+      if (achieved) {
+        ctx.strokeStyle = '#ffffff'
+        ctx.lineWidth = isLife ? 1 : 2
+        ctx.lineCap = 'round'
+        ctx.beginPath()
+        ctx.moveTo(x + boxW * 0.1, y + boxH / 2)
+        ctx.lineTo(x + boxW * 0.9, y + boxH / 2)
+        ctx.stroke()
+      }
+    } else if (isCurrent) {
+      if (shape === 'circle') {
+        const r = Math.min(boxW, boxH) / 2
         const glow = ctx.createRadialGradient(x + boxW/2, y + boxH/2, r * 0.5, x + boxW/2, y + boxH/2, r * 2)
         glow.addColorStop(0, accent + '66')
         glow.addColorStop(1, 'transparent')
         ctx.fillStyle = glow
+        ctx.beginPath()
+        ctx.arc(x + boxW / 2, y + boxH / 2, r * 2, 0, Math.PI * 2)
         ctx.fill()
-        // Main dot
         ctx.beginPath()
         ctx.arc(x + boxW / 2, y + boxH / 2, r, 0, Math.PI * 2)
         ctx.fillStyle = '#ffffff'
         ctx.fill()
       } else {
-        // Outer glow
         ctx.shadowColor = accent
         ctx.shadowBlur = isLife ? 4 : 10
         ctx.beginPath()
@@ -388,7 +431,6 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
       }
     } else {
       ctx.fillStyle = filled ? accent : 'rgba(255,255,255,0.07)'
-      ctx.globalAlpha = filled ? 1 : 1
       if (shape === 'circle') {
         const r = Math.min(boxW, boxH) / 2
         ctx.beginPath()
@@ -422,9 +464,16 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     ctx.fillStyle = 'rgba(255,255,255,0.14)'
     ctx.fillText(`age ${age} · ${Math.round((pastWks / total) * 100)}% of 90 years`, w / 2, statsY + h * 0.035)
   } else {
+    const goalDate = new Date()
+    goalDate.setDate(goalDate.getDate() + daysLeft)
+    const goalWeek = Math.floor((goalDate - new Date(goalDate.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))
     setFont(ctx, '400', w * 0.042)
     ctx.fillStyle = accent + 'cc'
+    ctx.textAlign = 'center'
     ctx.fillText(`week ${currentWeek} of 52 · ${currentYear}`, w / 2, statsY)
+    setFont(ctx, '300', w * 0.03)
+    ctx.fillStyle = '#ff5f45cc'
+    ctx.fillText(`■ goal → week ${goalWeek} · ${goalDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`, w / 2, statsY + h * 0.038)
   }
 }
 
@@ -492,6 +541,43 @@ function drawWeeklyGrid(ctx, w, h, daysLeft, accent, bgImage) {
 
 // ── Export ──────────────────────────────────────────────────────────
 // Returns pixel position of current week box for pulse overlay
+// Returns pixel position of goal week box for tooltip overlay
+export function getMementoGoalWeekPos(canvasW, canvasH, density, birthYear, daysLeft) {
+  const goalDate = new Date()
+  goalDate.setDate(goalDate.getDate() + daysLeft)
+  const goalYear = goalDate.getFullYear()
+  const goalWeek = Math.floor((goalDate - new Date(goalYear, 0, 1)) / (7 * 24 * 60 * 60 * 1000))
+
+  const isLife = density === 'life' && birthYear
+  const total = isLife ? 90 * 52 : 52
+  const cols = isLife ? 52 : 13
+  const rows = Math.ceil(total / cols)
+  const padding = canvasW * 0.06
+  const availW = canvasW - padding * 2
+  const gap = isLife ? canvasW * 0.004 : canvasW * 0.018
+  const boxW = (availW - gap * (cols - 1)) / cols
+  const boxH = isLife ? boxW : canvasW * 0.046
+  const gapY = isLife ? gap : canvasW * 0.022
+  const gridH = rows * boxH + (rows - 1) * gapY
+  const ox = padding
+  const oy = canvasH * 0.56 - gridH / 2
+
+  let goalIndex = isLife
+    ? (goalYear - parseInt(birthYear)) * 52 + goalWeek
+    : goalWeek
+  goalIndex = Math.min(goalIndex, total - 1)
+
+  const col = goalIndex % cols
+  const row = Math.floor(goalIndex / cols)
+  return {
+    x: ox + col * (boxW + gap),
+    y: oy + row * (boxH + gapY),
+    w: boxW,
+    h: boxH,
+    label: goalDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+  }
+}
+
 export function getMementoCurrentWeekPos(canvasW, canvasH, density, birthYear) {
   const currentYear = new Date().getFullYear()
   const now = new Date()

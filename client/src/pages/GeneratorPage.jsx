@@ -1,13 +1,20 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
-import { RESOLUTIONS, DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, getMementoCurrentWeekPos } from '../components/WallpaperCanvas'
+import { RESOLUTIONS, DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, getMementoCurrentWeekPos, getMementoGoalWeekPos } from '../components/WallpaperCanvas'
 import { WALLPAPER_STYLES, PhoneUIOverlay, PhoneSideButtons } from '../components/PhoneCard'
 
+// Next Monday (start of next week)
 const DEFAULT_DATE = (() => {
   const d = new Date()
-  d.setFullYear(d.getFullYear() + 1)
+  const day = d.getDay()
+  const daysUntilMonday = day === 0 ? 1 : 8 - day
+  d.setDate(d.getDate() + daysUntilMonday)
   return d.toISOString().split('T')[0]
 })()
+
+// Min = next Monday, Max = Dec 31 of current year
+const MIN_DATE = DEFAULT_DATE
+const MAX_DATE = `${new Date().getFullYear()}-12-31`
 
 const INPUT_CLS =
   'w-full rounded-xl px-4 py-3 border text-sm outline-none transition-all duration-200 bg-white'
@@ -30,6 +37,7 @@ export default function GeneratorPage() {
   const [resolution, setResolution]       = useState('iphone')
   const [generating, setGenerating]       = useState(false)
   const [downloaded, setDownloaded]       = useState(false)
+  const [goalAchieved, setGoalAchieved]   = useState(false)
 
   // Memento Mori specific options
   const [mmQuote, setMmQuote]         = useState('MEMENTO MORI')
@@ -37,6 +45,7 @@ export default function GeneratorPage() {
   const [mmDensity, setMmDensity]     = useState('year')
   const [mmBirthYear, setMmBirthYear] = useState(new Date().getFullYear() - 25)
   const [mmColor, setMmColor]         = useState('#94a3b8')
+  const [mmNote, setMmNote]           = useState('')
 
   // Extract background from URL on mount
   useEffect(() => {
@@ -54,7 +63,7 @@ export default function GeneratorPage() {
   const res          = RESOLUTIONS[resolution]
   const daysLeft     = getDaysLeft(targetDate)
   const activeAccent = selectedStyle === 'memento-mori' ? mmColor : accent
-  const mmOpts       = { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear }
+  const mmOpts = { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear, achieved: goalAchieved }
 
   const PREVIEW_W = 176
   const PREVIEW_H = 360
@@ -67,7 +76,7 @@ export default function GeneratorPage() {
       canvas.height = PREVIEW_H * 2
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const opts = selectedStyle === 'memento-mori' ? { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear } : undefined
+      const opts = selectedStyle === 'memento-mori' ? { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear, achieved: goalAchieved } : undefined
       if (backgroundImage) {
         const img = new Image()
         img.src = backgroundImage
@@ -76,7 +85,7 @@ export default function GeneratorPage() {
         drawFn(ctx, canvas.width, canvas.height, daysLeft, activeAccent, null, opts)
       }
     })
-  }, [drawFn, daysLeft, activeAccent, backgroundImage, selectedStyle, mmQuote, mmShape, mmDensity, mmBirthYear])
+  }, [drawFn, daysLeft, activeAccent, backgroundImage, selectedStyle, mmQuote, mmShape, mmDensity, mmBirthYear, goalAchieved])
 
   useEffect(() => { renderPreview() }, [renderPreview])
 
@@ -104,11 +113,11 @@ export default function GeneratorPage() {
       canvas.height = res.h
       const ctx = canvas.getContext('2d')
       ctx.clearRect(0, 0, res.w, res.h)
-      const opts = selectedStyle === 'memento-mori' ? { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear } : undefined
+      const opts = selectedStyle === 'memento-mori' ? { quote: mmQuote, shape: mmShape, density: mmDensity, birthYear: mmBirthYear, achieved: goalAchieved } : undefined
       if (backgroundImage) {
         const img = new Image()
         img.src = backgroundImage
-        img.onload = () => { drawFn(ctx, res.w, res.h, daysLeft, activeAccent, img, opts); triggerDownload(canvas) }
+        img.onload = () => drawFn(ctx, canvas.width, canvas.height, daysLeft, activeAccent, img, opts)
       } else {
         drawFn(ctx, res.w, res.h, daysLeft, activeAccent, null, opts)
         triggerDownload(canvas)
@@ -171,42 +180,58 @@ export default function GeneratorPage() {
                 className={`phone-mockup relative z-10 ${
                   resolution === 'android' ? 'is-android' : 'is-iphone'
                 }`}
-                style={{ width: '130px', height: '266px' }}
+                style={{ width: '220px', height: '450px' }}
               >
                 <div
                   className="absolute inset-0 overflow-hidden"
-                  style={{ borderRadius: resolution === 'android' ? '24px' : '28px' }}
+                  style={{ borderRadius: resolution === 'android' ? '36px' : '42px' }}
                 >
                   <canvas
                     ref={mobilePreviewRef}
-                    style={{
-                      display: 'block',
-                      width: '130px',
-                      height: '266px',
-                      objectFit: 'cover',
-                    }}
+                    style={{ display: 'block', width: '220px', height: '450px', objectFit: 'cover' }}
                   />
                   {selectedStyle === 'memento-mori' && (() => {
                     const pos = getMementoCurrentWeekPos(PREVIEW_W * 2, PREVIEW_H * 2, mmDensity, mmBirthYear)
-                    const scaleX = 130 / (PREVIEW_W * 2)
-                    const scaleY = 266 / (PREVIEW_H * 2)
+                    const scaleX = 220 / (PREVIEW_W * 2)
+                    const scaleY = 450 / (PREVIEW_H * 2)
                     return (
-                      <div
-                        className="mm-pulse-ring"
-                        style={{
-                          left: pos.x * scaleX,
-                          top: pos.y * scaleY,
-                          width: pos.w * scaleX,
-                          height: pos.h * scaleY,
-                          background: activeAccent + '99',
-                        }}
-                      />
+                      <div className="mm-pulse-ring" style={{ left: pos.x * scaleX, top: pos.y * scaleY, width: pos.w * scaleX, height: pos.h * scaleY, background: activeAccent + '99' }} />
                     )
                   })()}
-                  {/* Real mobile UI elements - Color Synced */}
+                  {selectedStyle === 'memento-mori' && mmNote && (() => {
+                    const goalPos = getMementoGoalWeekPos(PREVIEW_W * 2, PREVIEW_H * 2, mmDensity, mmBirthYear, daysLeft)
+                    const scaleX = 220 / (PREVIEW_W * 2)
+                    const scaleY = 450 / (PREVIEW_H * 2)
+                    return (
+                      <div
+                        className="absolute group"
+                        style={{ left: goalPos.x * scaleX, top: goalPos.y * scaleY, width: goalPos.w * scaleX, height: goalPos.h * scaleY, zIndex: 30, cursor: 'pointer' }}
+                      >
+                        <div
+                          className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                          style={{
+                            position: 'absolute',
+                            bottom: 'calc(100% + 4px)',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: '100px',
+                            background: 'rgba(14,14,16,0.93)',
+                            backdropFilter: 'blur(16px)',
+                            WebkitBackdropFilter: 'blur(16px)',
+                            borderRadius: '10px',
+                            padding: '5px 7px',
+                            display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '4px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff5f45', flexShrink: 0, marginTop: '2px', display: 'block' }} />
+                          <span style={{ color: '#fff', fontSize: '8px', fontWeight: 500, lineHeight: '1.4', wordBreak: 'break-word' }}>{mmNote}</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
                   <PhoneUIOverlay isSmall={true} color={activeAccent} />
                 </div>
-                {/* Physical Hardware Buttons */}
                 <PhoneSideButtons isBanner={false} />
               </div>
             </div>
@@ -364,6 +389,25 @@ export default function GeneratorPage() {
                     </div>
                   </div>
 
+                  {/* Week Note */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Goal Week Note</label>
+                    <input
+                      type="text"
+                      value={mmNote}
+                      onChange={e => {
+                        const words = e.target.value.trim().split(/\s+/).filter(Boolean)
+                        if (words.length <= 20 || e.target.value.length < mmNote.length) setMmNote(e.target.value)
+                      }}
+                      className={INPUT_CLS}
+                      style={{ ...INPUT_STYLE, colorScheme: 'light' }}
+                      placeholder="A short note… hover the goal marker to see it"
+                    />
+                    <p className="mt-1.5 text-xs" style={{ color: mmNote.trim().split(/\s+/).filter(Boolean).length >= 20 ? '#ff5f45' : '#a1a1a6' }}>
+                      {mmNote.trim().split(/\s+/).filter(Boolean).length}/20 words · hover goal marker to reveal
+                    </p>
+                  </div>
+
                   {/* Custom Quote */}
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: '#3d3d3f' }}>Custom Quote</label>
@@ -396,13 +440,14 @@ export default function GeneratorPage() {
                     className="block text-sm font-medium mb-2"
                     style={{ color: '#3d3d3f' }}
                   >
-                    Target date
+                    {selectedStyle === 'memento-mori' ? 'Target Week' : 'Target date'}
                   </label>
                   <input
                     id="target-date"
                     type="date"
                     value={targetDate}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={selectedStyle === 'memento-mori' ? MIN_DATE : new Date().toISOString().split('T')[0]}
+                    max={selectedStyle === 'memento-mori' ? MAX_DATE : undefined}
                     onChange={(e) => { setTargetDate(e.target.value); setDownloaded(false) }}
                     {...dateFocus}
                     className={INPUT_CLS}
@@ -412,9 +457,31 @@ export default function GeneratorPage() {
                       colorScheme: 'light',
                     }}
                   />
-                  <p className="mt-1.5 text-xs" style={{ color: '#a1a1a6' }}>
-                    {dateLabel}
+                  <p className="mt-1.5 text-xs" style={{ color: selectedStyle === 'memento-mori' ? '#ff5f45' : '#a1a1a6' }}>
+                    {selectedStyle === 'memento-mori'
+                      ? (() => {
+                          const d = new Date(targetDate)
+                          const week = Math.floor((d - new Date(d.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))
+                          return `→ marks week ${week} of ${d.getFullYear()}`
+                        })()
+                      : dateLabel
+                    }
                   </p>
+                  {selectedStyle === 'memento-mori' && (
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-xs" style={{ color: '#6e6e73' }}>Mark as achieved — strikes through target week</span>
+                      <button
+                        onClick={() => setGoalAchieved(v => !v)}
+                        className="relative flex-shrink-0 w-9 h-5 rounded-full transition-all duration-200 ml-3"
+                        style={{ background: goalAchieved ? '#22c55e' : '#d1d5db' }}
+                      >
+                        <span
+                          className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200"
+                          style={{ left: goalAchieved ? '17px' : '2px' }}
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Resolution */}
@@ -454,7 +521,7 @@ export default function GeneratorPage() {
               </div>
             </div>
 
-            {/* Download button */}
+
             <button
               id="download-btn"
               onClick={handleDownload}
@@ -538,35 +605,50 @@ export default function GeneratorPage() {
                 >
                   <canvas
                     ref={desktopPreviewRef}
-                    style={{
-                      display: 'block',
-                      width: '280px',
-                      height: '572px',
-                      objectFit: 'cover',
-                    }}
+                    style={{ display: 'block', width: '280px', height: '572px', objectFit: 'cover' }}
                   />
                   {selectedStyle === 'memento-mori' && (() => {
                     const pos = getMementoCurrentWeekPos(PREVIEW_W * 2, PREVIEW_H * 2, mmDensity, mmBirthYear)
                     const scaleX = 280 / (PREVIEW_W * 2)
                     const scaleY = 572 / (PREVIEW_H * 2)
                     return (
-                      <div
-                        className="mm-pulse-ring"
-                        style={{
-                          left: pos.x * scaleX,
-                          top: pos.y * scaleY,
-                          width: pos.w * scaleX,
-                          height: pos.h * scaleY,
-                          background: activeAccent + '99',
-                        }}
-                      />
+                      <div className="mm-pulse-ring" style={{ left: pos.x * scaleX, top: pos.y * scaleY, width: pos.w * scaleX, height: pos.h * scaleY, background: activeAccent + '99' }} />
                     )
                   })()}
-                  {/* Real mobile UI elements - Color Synced */}
+                  {selectedStyle === 'memento-mori' && mmNote && (() => {
+                    const goalPos = getMementoGoalWeekPos(PREVIEW_W * 2, PREVIEW_H * 2, mmDensity, mmBirthYear, daysLeft)
+                    const scaleX = 280 / (PREVIEW_W * 2)
+                    const scaleY = 572 / (PREVIEW_H * 2)
+                    return (
+                      <div
+                        className="absolute group"
+                        style={{ left: goalPos.x * scaleX, top: goalPos.y * scaleY, width: goalPos.w * scaleX, height: goalPos.h * scaleY, zIndex: 30, cursor: 'pointer' }}
+                      >
+                        <div
+                          className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                          style={{
+                            position: 'absolute',
+                            bottom: 'calc(100% + 6px)',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: '200px',
+                            background: 'rgba(14,14,16,0.93)',
+                            backdropFilter: 'blur(20px)',
+                            WebkitBackdropFilter: 'blur(20px)',
+                            borderRadius: '14px',
+                            padding: '8px 10px',
+                            display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: '6px',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff5f45', flexShrink: 0, marginTop: '3px', display: 'block' }} />
+                          <span style={{ color: '#fff', fontSize: '11px', fontWeight: 500, lineHeight: '1.5', wordBreak: 'break-word' }}>{mmNote}</span>
+                        </div>
+                      </div>
+                    )
+                  })()}
                   <PhoneUIOverlay isSmall={false} isBanner={true} color={activeAccent} />
                 </div>
-                {/* Physical Hardware Buttons */}
-                <PhoneSideButtons isBanner={true} />
               </div>
             </div>
 
@@ -587,6 +669,8 @@ export default function GeneratorPage() {
 
       {/* Hidden full-res download canvas */}
       <canvas ref={downloadCanvasRef} className="hidden" aria-hidden="true" />
+
+
     </main>
   )
 }
