@@ -132,11 +132,18 @@ export default function GeneratorPage() {
     <main className="min-h-screen pt-24 pb-20">
       <div className="max-w-6xl mx-auto px-6">
 
-        {/* Breadcrumb */}
-        <div className="mb-8 flex items-center gap-2 text-sm" style={{ color: '#a1a1a6' }}>
-          <Link to="/" className="hover:text-[#1d1d1f] transition-colors">Home</Link>
-          <span>/</span>
-          <span style={{ color: '#1d1d1f' }}>Create Wallpaper</span>
+        {/* Back button */}
+        <div className="mb-6 pt-2">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-medium rounded-xl px-3 py-2 transition-all hover:bg-black/5"
+            style={{ color: '#6e6e73' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Back
+          </Link>
         </div>
 
         {/* Page title */}
