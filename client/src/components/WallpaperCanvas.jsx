@@ -35,7 +35,7 @@ function drawBackground(ctx, w, h, stops, bgImage = null) {
     const ix = (w - iw) / 2
     const iy = (h - ih) / 2
     ctx.drawImage(bgImage, ix, iy, iw, ih)
-    
+
     // Add a subtle darkening overlay for readability
     ctx.fillStyle = 'rgba(0,0,0,0.45)'
     ctx.fillRect(0, 0, w, h)
@@ -225,7 +225,7 @@ function drawYearlyView(ctx, w, h, daysLeft, accent, bgImage) {
   const year   = new Date().getFullYear()
   const curMon = new Date().getMonth()
   const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-  const cols = 4, rows = 3
+  const cols = 4
 
   ctx.textAlign = 'center'
   setFont(ctx, '300', w * 0.042)
