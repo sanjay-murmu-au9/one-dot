@@ -164,12 +164,7 @@ export default function GeneratorPage() {
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-10 items-start">
 
           {/* ── MOBILE PREVIEW (Top) ─────────────────────── */}
-          <div className="lg:hidden w-full flex flex-col items-center gap-1 py-4 px-6 sticky top-16 z-30 transition-all duration-300" 
-               style={{ 
-                 background: 'transparent', 
-                 backdropFilter: 'blur(12px) saturate(160%)',
-                 WebkitBackdropFilter: 'blur(12px) saturate(160%)'
-               }}>
+          <div className="lg:hidden w-full flex flex-col items-center gap-1 py-4 px-6">
             <div className="relative">
               {/* Subtle shadow glow behind phone */}
               <div 
