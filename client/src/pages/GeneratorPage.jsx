@@ -1,7 +1,12 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
+import LoginModal from '../components/LoginModal'
 import { RESOLUTIONS, DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, getMementoCurrentWeekPos, getMementoGoalWeekPos } from '../components/WallpaperCanvas'
 import { WALLPAPER_STYLES, PhoneUIOverlay, PhoneSideButtons } from '../components/PhoneCard'
+import { useAuth } from '../contexts/AuthContext'
+import { useAutoWallpaperUpdate } from '../hooks/useAutoWallpaperUpdate'
+import { db } from '../firebase'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
 
 // Next Monday (start of next week)
 const DEFAULT_DATE = (() => {
@@ -31,10 +36,13 @@ export default function GeneratorPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [selectedStyle, setSelectedStyle] = useState(routeStyle || 'dot-grid')
+  const [selectedStyle, setSelectedStyle] = useState(routeStyle || 'memento-mori')
   const [backgroundImage, setBackgroundImage] = useState(null)
   const [targetDate, setTargetDate]       = useState(DEFAULT_DATE)
-  const [resolution, setResolution]       = useState('iphone')
+  // Auto-detect: use 'android' when running in Capacitor on Android, else default to 'android'
+  const [resolution, setResolution]       = useState(
+    window.Capacitor?.getPlatform?.() === 'ios' ? 'iphone' : 'android'
+  )
   const [generating, setGenerating]       = useState(false)
   const [downloaded, setDownloaded]       = useState(false)
   const [goalAchieved, setGoalAchieved]   = useState(false)
@@ -47,12 +55,96 @@ export default function GeneratorPage() {
   const [mmColor, setMmColor]         = useState('#94a3b8')
   const [mmNote, setMmNote]           = useState('')
 
+  const { currentUser } = useAuth()
+  const [syncing, setSyncing] = useState(false)
+  const [syncStatus, setSyncStatus] = useState(null) // 'success' | 'error' | null
+
+  // Auto-update (native WorkManager)
+  const autoUpdate = useAutoWallpaperUpdate()
+  const [autoUpdateToggling, setAutoUpdateToggling] = useState(false)
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
+
   // Extract background from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const bg = params.get('bg')
     if (bg) setBackgroundImage(bg)
   }, [location.search])
+
+  // Check onboarding status: redirect if not done, sync to Firestore if only in localStorage
+  useEffect(() => {
+    async function checkOnboarding() {
+      const localDOB = localStorage.getItem('one_dot_dob')
+      const localName = localStorage.getItem('one_dot_name')
+
+      if (!currentUser) {
+        setCheckingOnboarding(false)
+        return
+      }
+
+      // Check Firestore for onboarding data
+      try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
+        const data = userDoc.exists() ? userDoc.data() : {}
+
+        if (data.onboardingCompleted && data.dob) {
+          // Onboarding already in Firestore — also cache locally
+          if (!localDOB) {
+            localStorage.setItem('one_dot_dob', data.dob)
+            if (data.name) localStorage.setItem('one_dot_name', data.name)
+          }
+          // Pre-fill birth year
+          const birthYear = parseInt(data.dob.split('-')[0])
+          if (birthYear && !isNaN(birthYear) && birthYear >= 1900) {
+            setMmBirthYear(birthYear)
+            setMmDensity('life')
+          }
+          setCheckingOnboarding(false)
+          return
+        }
+
+        // Onboarding not in Firestore — check localStorage
+        if (localDOB && localName) {
+          // Sync localStorage data to Firestore
+          await setDoc(doc(db, 'users', currentUser.uid), {
+            name: localName,
+            dob: localDOB,
+            birthYear: parseInt(localDOB.split('-')[0]),
+            onboardingCompleted: true,
+            updatedAt: new Date().toISOString(),
+          }, { merge: true })
+          const birthYear = parseInt(localDOB.split('-')[0])
+          if (birthYear && !isNaN(birthYear) && birthYear >= 1900) {
+            setMmBirthYear(birthYear)
+            setMmDensity('life')
+          }
+          setCheckingOnboarding(false)
+          return
+        }
+
+        // No onboarding data anywhere — redirect to onboarding
+        setCheckingOnboarding(false)
+        navigate('/onboarding', { replace: true })
+      } catch (err) {
+        console.error('Error checking onboarding:', err)
+        setCheckingOnboarding(false)
+      }
+    }
+
+    checkOnboarding()
+  }, [currentUser, navigate])
+
+  // Pre-fill birth year from localStorage (fallback if above didn't run)
+  useEffect(() => {
+    const cachedDOB = localStorage.getItem('one_dot_dob')
+    if (cachedDOB) {
+      const birthYear = parseInt(cachedDOB.split('-')[0])
+      if (birthYear && !isNaN(birthYear) && birthYear >= 1900) {
+        setMmBirthYear(birthYear)
+        setMmDensity('life')
+      }
+    }
+  }, [])
 
   const mobilePreviewRef  = useRef(null)
   const desktopPreviewRef = useRef(null)
@@ -125,9 +217,59 @@ export default function GeneratorPage() {
     }, 500)
   }
 
+  const handleSyncToCloud = async () => {
+    if (!currentUser) return alert('Please log in to sync your wallpaper.')
+    setSyncing(true)
+    setSyncStatus(null)
+
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        active_wallpaper_config: {
+          style: selectedStyle,
+          targetDate,
+          resolution,
+          memento_options: {
+            birthYear: mmBirthYear,
+            density: mmDensity,
+            accent: activeAccent,
+            quote: mmQuote,
+          },
+          backgroundImage: backgroundImage || null,
+        },
+        updatedAt: new Date().toISOString()
+      }, { merge: true })
+      
+      setSyncStatus('success')
+      setTimeout(() => setSyncStatus(null), 4000)
+    } catch (err) {
+      console.error('Sync error:', err)
+      setSyncStatus('error')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const styleInfo  = WALLPAPER_STYLES.find(s => s.id === selectedStyle)
   const dateLabel  = daysLeft > 0 ? `${daysLeft} days from today` : daysLeft === 0 ? 'Today!' : `${Math.abs(daysLeft)} days ago`
   const dateFocus  = useFocus()
+
+  // Auth guard — show login modal if not authenticated
+  if (!currentUser) {
+    return (
+      <main className="min-h-screen pt-24 pb-20">
+        <LoginModal onClose={() => navigate('/')} />
+      </main>
+    )
+  }
+
+  // Show loading while checking onboarding status
+  if (checkingOnboarding) {
+    return (
+      <main className="min-h-screen pt-24 pb-20 flex items-center justify-center">
+        <span className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen pt-24 pb-20">
@@ -517,63 +659,164 @@ export default function GeneratorPage() {
             </div>
 
 
-            <button
-              id="download-btn"
-              onClick={handleDownload}
-              disabled={generating}
-              className="w-full py-4 rounded-2xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2"
-              style={{
-                background: downloaded ? '#22c55e' : '#ff5f45',
-                color: '#fff',
-                boxShadow: downloaded
-                  ? '0 4px 16px rgba(34,197,94,0.3)'
-                  : '0 4px 16px rgba(255,95,69,0.35)',
-                opacity: generating ? 0.8 : 1,
-                cursor: generating ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {generating ? (
-                <>
-                  <span
-                    className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                  />
-                  Rendering…
-                </>
-              ) : downloaded ? (
-                '✓ Downloaded successfully!'
-              ) : (
-                `↓ Download wallpaper — ${res.w}×${res.h}`
-              )}
-            </button>
+            {/* ── SYNC TO DEVICE ── */}
+            {currentUser && (
+              <div className="space-y-4">
+                <button
+                  onClick={handleSyncToCloud}
+                  disabled={syncing}
+                  className="w-full py-4 rounded-2xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2"
+                  style={{
+                    background: syncStatus === 'success' ? '#22c55e' : '#1d1d1f',
+                    color: '#fff',
+                    boxShadow: syncStatus === 'success'
+                      ? '0 4px 16px rgba(34,197,94,0.3)'
+                      : '0 4px 16px rgba(29,29,31,0.25)',
+                    opacity: syncing ? 0.8 : 1,
+                  }}
+                >
+                  {syncing ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Syncing…
+                    </>
+                  ) : syncStatus === 'success' ? (
+                    '✓ Synced to Device'
+                  ) : (
+                    '↑ Sync to Device'
+                  )}
+                </button>
 
-            {/* Lock screen steps */}
-            <div className="card p-5 border" style={{ borderColor: '#e8e8ed' }}>
-              <h3 className="font-medium text-sm mb-3" style={{ color: '#1d1d1f' }}>
-                How to set as lock screen
-              </h3>
-              <ol className="space-y-2 text-sm" style={{ color: '#6e6e73' }}>
-                <li className="flex gap-2.5">
-                  <span
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: '#ff5f45' }}
-                  >1</span>
-                  Open <strong className="text-[#1d1d1f]">Settings → Wallpaper</strong>
-                </li>
-                <li className="flex gap-2.5">
-                  <span
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: '#ff5f45' }}
-                  >2</span>
-                  Tap <strong className="text-[#1d1d1f]">Add New Wallpaper → Photos</strong>
-                </li>
-                <li className="flex gap-2.5">
-                  <span
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: '#ff5f45' }}
-                  >3</span>
-                  Select the downloaded image and set as <strong className="text-[#1d1d1f]">Lock Screen</strong>
-                </li>
-              </ol>
+                <div className="card p-5 border" style={{ borderColor: '#e8e8ed' }}>
+                  <p className="text-sm mb-4" style={{ color: '#6e6e73' }}>
+                    Syncing pushes your wallpaper config to the cloud so your phone can auto-update with the latest date, grid progress, and time.
+                  </p>
+
+                  {/* Android Auto-Update */}
+                  {autoUpdate.isNative && (
+                    <div className="flex items-center justify-between py-3 border-t" style={{ borderColor: '#e8e8ed' }}>
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: '#1d1d1f' }}>Automatic Updates</p>
+                        <p className="text-xs mt-0.5" style={{ color: '#86868b' }}>
+                          {autoUpdate.isEnabled
+                            ? 'Refreshes every few hours'
+                            : 'Keep wallpaper fresh automatically'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setAutoUpdateToggling(true)
+                          const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/api/wallpaper/u/${currentUser.uid}/daily.png`
+                          const result = autoUpdate.isEnabled
+                            ? await autoUpdate.disableAutoUpdate()
+                            : await autoUpdate.enableAutoUpdate(apiUrl)
+
+                          if (result.success) {
+                            alert(result.message)
+                          } else {
+                            alert('Error: ' + result.error)
+                          }
+                          setAutoUpdateToggling(false)
+                        }}
+                        disabled={autoUpdateToggling || autoUpdate.loading}
+                        className="relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-200"
+                        style={{
+                          background: autoUpdate.isEnabled ? '#22c55e' : '#d1d5db',
+                          opacity: (autoUpdateToggling || autoUpdate.loading) ? 0.6 : 1
+                        }}
+                      >
+                        <span
+                          className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-200"
+                          style={{ left: autoUpdate.isEnabled ? '22px' : '2px' }}
+                        />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Shortcut URL (collapsed) */}
+                  <div className="pt-3 border-t" style={{ borderColor: '#e8e8ed' }}>
+                    <p className="text-xs font-medium mb-2" style={{ color: '#86868b' }}>Shortcut URL</p>
+                    <div className="flex gap-2">
+                      <input
+                        readOnly
+                        value={`${import.meta.env.VITE_API_BASE_URL}/api/wallpaper/u/${currentUser.uid}/daily.png`}
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-[11px] font-mono text-gray-500 outline-none"
+                      />
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${import.meta.env.VITE_API_BASE_URL}/api/wallpaper/u/${currentUser.uid}/daily.png`)
+                          alert('URL copied!')
+                        }}
+                        className="px-3 py-2 bg-black text-white rounded-lg text-[11px] font-bold hover:bg-gray-800 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── DOWNLOAD & MANUAL SETUP ── */}
+            <div className="border-t pt-6" style={{ borderColor: '#e8e8ed' }}>
+              <button
+                id="download-btn"
+                onClick={handleDownload}
+                disabled={generating}
+                className="w-full py-4 rounded-2xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2"
+                style={{
+                  background: downloaded ? '#22c55e' : '#ff5f45',
+                  color: '#fff',
+                  boxShadow: downloaded
+                    ? '0 4px 16px rgba(34,197,94,0.3)'
+                    : '0 4px 16px rgba(255,95,69,0.35)',
+                  opacity: generating ? 0.8 : 1,
+                  cursor: generating ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {generating ? (
+                  <>
+                    <span
+                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                    />
+                    Rendering…
+                  </>
+                ) : downloaded ? (
+                  '✓ Downloaded successfully!'
+                ) : (
+                  `↓ Download wallpaper — ${res.w}×${res.h}`
+                )}
+              </button>
+
+              {/* Lock screen steps */}
+              <div className="card p-5 border mt-4" style={{ borderColor: '#e8e8ed' }}>
+                <h3 className="font-medium text-sm mb-3" style={{ color: '#1d1d1f' }}>
+                  How to set as lock screen
+                </h3>
+                <ol className="space-y-2 text-sm" style={{ color: '#6e6e73' }}>
+                  <li className="flex gap-2.5">
+                    <span
+                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ background: '#ff5f45' }}
+                    >1</span>
+                    Open <strong className="text-[#1d1d1f]">Settings → Wallpaper</strong>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span
+                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ background: '#ff5f45' }}
+                    >2</span>
+                    Tap <strong className="text-[#1d1d1f]">Add New Wallpaper → Photos</strong>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span
+                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                      style={{ background: '#ff5f45' }}
+                    >3</span>
+                    Select the downloaded image and set as <strong className="text-[#1d1d1f]">Lock Screen</strong>
+                  </li>
+                </ol>
+              </div>
             </div>
           </div>
 

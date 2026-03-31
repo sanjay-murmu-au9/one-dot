@@ -92,6 +92,19 @@ export default function AboutPage() {
           </Link>
         </div>
       </div>
+
+      <footer className="mt-20 py-8 border-t border-gray-100/50 flex flex-col items-center gap-4">
+        <div className="flex items-center gap-6 text-[11px] font-medium tracking-wide uppercase" style={{ color: '#86868b' }}>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Privacy Policy</a>
+          <span className="opacity-20">•</span>
+          <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">Terms of Service</a>
+          <span className="opacity-20">•</span>
+          <span className="cursor-default">One-Dot v1.0.0</span>
+        </div>
+        <div className="text-[10px] opacity-40 uppercase tracking-[0.2em]" style={{ color: '#86868b' }}>
+          © 2026 Mento Mori & Stoic Aesthetic
+        </div>
+      </footer>
     </main>
   )
 }

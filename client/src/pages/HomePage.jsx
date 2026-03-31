@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import PhoneCard, { WALLPAPER_STYLES } from '../components/PhoneCard'
+import DraggableAutoScroll from '../components/DraggableAutoScroll'
 
 // Marquee strip items
 const MARQUEE_ITEMS = [
   'Life Grid', 'Carpe Diem', 'Memento Mori', 'Progress View',
-  'Yearly View', 'Weekly Grid', 'Minimal Text', 'Large Countdown',
+  'Yearly View', 'Weekly Grid', 'Quarterly View', 'Large Countdown',
   'Life Grid', 'Carpe Diem', 'Memento Mori', 'Progress View',
-  'Yearly View', 'Weekly Grid', 'Minimal Text', 'Large Countdown',
+  'Yearly View', 'Weekly Grid', 'Quarterly View', 'Large Countdown',
 ]
 
 const HERO_ITEMS = [
@@ -94,31 +95,35 @@ export default function HomePage() {
           <h1
             className="reveal reveal-delay-1 display-serif"
             style={{
-              fontSize: 'clamp(3rem, 7vw, 5.5rem)',
+              fontSize: 'clamp(2.8rem, 6.5vw, 5rem)',
               color: '#1d1d1f',
               marginBottom: '24px',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em'
             }}
           >
-            Your life,{' '}
-            <span style={{ color: '#ff5f45' }}>one day</span>
-            {' '}at a time.
+            Transform your phone into a{' '}
+            <span style={{ color: '#ff5f45' }}>focus tool.</span>
           </h1>
 
           <p
             className="reveal reveal-delay-2 mx-auto text-lg leading-relaxed mb-10"
-            style={{ color: '#6e6e73', maxWidth: '500px' }}
+            style={{ color: '#6e6e73', maxWidth: '600px' }}
           >
-            Beautiful countdown wallpapers that live on your lock screen.
-            Choose a style, pick your date, download in seconds.
+            Download a <strong>free, high-resolution wallpaper</strong> perfectly sized for your screen. Instantly track your life in weeks, visualize your year, or count down to your biggest milestone.
           </p>
 
           {/* CTAs */}
-          <div className="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/generate" id="hero-cta" className="btn-coral text-[15px] px-7 py-3.5">
-              Create your wallpaper →
+          <div className="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/onboarding"
+              id="hero-cta"
+              className="btn-coral text-[16px] px-8 py-4 font-semibold shadow-[0_8px_24px_rgba(255,95,69,0.3)] hover:shadow-[0_12px_28px_rgba(255,95,69,0.4)] transition-all"
+            >
+              Get Your Custom Wallpaper →
             </Link>
-            <a href="#gallery" className="btn-ghost text-[15px] px-7 py-3.5">
-              Browse styles
+            <a href="#gallery" className="btn-ghost text-[16px] px-8 py-4 font-medium">
+              See what it looks like
             </a>
           </div>
         </div>
@@ -207,22 +212,22 @@ export default function HomePage() {
         {/* Dual Marquee Rows */}
         <div className="space-y-4 marquee-mask">
           {/* Row 1: Leftward */}
-          <div className="flex marquee-left gap-8 py-8">
-            {[...WALLPAPER_STYLES, ...WALLPAPER_STYLES].map((style, i) => (
+          <DraggableAutoScroll direction="left" speed={1}>
+            {WALLPAPER_STYLES.map((style, i) => (
               <div key={`${style.id}-row1-${i}`} className="flex-shrink-0">
                 <PhoneCard style={style} floatClass="" />
               </div>
             ))}
-          </div>
+          </DraggableAutoScroll>
 
           {/* Row 2: Rightward - Trending & Loved */}
-          <div className="flex marquee-right gap-8 py-8">
-            {[...TRENDING_WALLPAPERS, ...TRENDING_WALLPAPERS].map((style, i) => (
+          <DraggableAutoScroll direction="right" speed={1}>
+            {TRENDING_WALLPAPERS.map((style, i) => (
               <div key={`${style.id}-trending-${i}`} className="flex-shrink-0">
                 <PhoneCard style={style} floatClass="" />
               </div>
             ))}
-          </div>
+          </DraggableAutoScroll>
         </div>
       </section>
 
@@ -246,21 +251,21 @@ export default function HomePage() {
             {[
               {
                 num: '01',
-                icon: '🎨',
-                title: 'Pick a style',
-                body: 'Browse 8 hand-crafted wallpaper designs — each with a distinct personality and aesthetic.',
+                icon: '✦',
+                title: 'Select a design',
+                body: 'Browse our collection of minimalist, precision-crafted lock screen layouts designed to keep you grounded.',
               },
               {
                 num: '02',
-                icon: '📅',
-                title: 'Set your date',
-                body: 'A birthday, a launch day, a fitness goal. Any meaningful date becomes your countdown.',
+                icon: '⚙️',
+                title: 'Customize it',
+                body: 'Input your birth year, set a target date, or choose your own colors. Watch your unique timeline generate in real-time.',
               },
               {
                 num: '03',
                 icon: '📲',
-                title: 'Download & set',
-                body: 'Download a pixel-perfect PNG at your exact phone resolution. Set as lock screen.',
+                title: 'Set as wallpaper',
+                body: 'Download the high-res PNG and set it as your lock screen. Every time you wake your phone, you get a powerful daily update on your progress.',
               },
             ].map((step, i) => (
               <div
@@ -338,7 +343,7 @@ export default function HomePage() {
           <p className="mt-4 mb-10 text-base" style={{ color: 'rgba(255,255,255,0.5)' }}>
             Free. Beautiful. On your lock screen every time you reach for your phone.
           </p>
-          <Link to="/generate" id="bottom-cta" className="btn-coral text-base px-8 py-4">
+          <Link to="/onboarding" id="bottom-cta" className="btn-coral text-base px-8 py-4">
             Create your wallpaper — it's free
           </Link>
         </div>
@@ -355,6 +360,8 @@ export default function HomePage() {
         <div className="flex gap-5 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
           <Link to="/about" className="hover:text-white transition-colors">About</Link>
           <Link to="/generate" className="hover:text-white transition-colors">Create</Link>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy</a>
+          <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms</a>
         </div>
       </footer>
     </main>

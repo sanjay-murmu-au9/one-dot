@@ -22,8 +22,8 @@ export const WALLPAPER_STYLES = [
     animDelay: 120,
   },
   {
-    id: 'minimal-text',
-    name: 'Minimal Text',
+    id: 'quarterly-view',
+    name: 'Quarterly View',
     tag: 'Clean',
     animDelay: 180,
   },
@@ -50,6 +50,18 @@ export const WALLPAPER_STYLES = [
     name: 'Weekly Grid',
     tag: 'Structured',
     animDelay: 180,
+  },
+  {
+    id: 'life-view',
+    name: 'Life in Weeks',
+    tag: 'Lifetime',
+    animDelay: 240,
+  },
+  {
+    id: 'special-dates',
+    name: 'Special Dates',
+    tag: 'Highlights',
+    animDelay: 300,
   },
 ]
 
@@ -91,7 +103,7 @@ function WallpaperThumb({ styleId, width = 200, height = 430, bgImage }) {
   )
 }
 
-export function PhoneUIOverlay({ isSmall = true, isBanner = false, color = "white", randomize = false }) {
+export function PhoneUIOverlay({ isSmall = true, isBanner = false, color = "white", randomize = false, showClock = true, isAndroid = false }) {
   const now = new Date()
   let time, date
   if (randomize) {
@@ -103,99 +115,107 @@ export function PhoneUIOverlay({ isSmall = true, isBanner = false, color = "whit
     time = `${h}:${m}`
     date = `${days[Math.floor(Math.random() * 7)]} ${months[Math.floor(Math.random() * 12)]} ${d}`
   } else {
-    time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false })
+    time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).replace(/\s?[AP]M/i, '')
     date = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }
-  const padding = isBanner ? 'p-6 pb-4' : 'p-[11px] pb-3'
-  const timeSize = isBanner ? 'text-[15px]' : 'text-[10px]'
+  const padding = isBanner ? 'pt-[11px] pb-4 px-10' : 'pt-[8px] pb-3 px-6'
+  const statusBarMt = isAndroid 
+    ? (isBanner ? 'mt-[2px]' : 'mt-[-4px]') 
+    : (isBanner ? 'mt-[6px]' : 'mt-[1px]')
+  const timeSize = isBanner ? 'text-[11px]' : 'text-[9px]'
   const actionSize = isBanner ? 'w-11 h-11' : 'w-9.5 h-9.5'
   const footerIconSize = isBanner ? '22' : '19'
-  
-  // Icon dimensions scaled - balanced for zero overlap
-  const sW = isBanner ? 20 : 14
-  const sH = isBanner ? 13 : 9
+
+  // Icon dimensions — small enough that [time+signal] never reaches the pill
+  const sW = isBanner ? 13 : 11
+  const sH = isBanner ? 8 : 7
 
   return (
-    <div className={`absolute inset-0 pointer-events-none z-20 flex flex-col justify-between ${padding}`}>
-      {/* Top Status Bar - Precise iOS Layout */}
-      <div className="flex justify-between items-start mt-[1px]">
-        {/* Time - Left side, aligned with island center-ish */}
-        {/* Left side: Time & Signal */}
-        <div className="flex items-center gap-2 pt-1 pl-1">
-          <div className={`${timeSize} font-bold text-white tracking-tight leading-none`}>
-            9:41
+    <div className={`absolute inset-0 pointer-events-none z-40 flex flex-col justify-between ${padding}`}>
+      {/* Top Status Bar - Adaptive Layout */}
+      <div className={`flex justify-between items-start ${statusBarMt} ${isBanner ? 'px-3' : 'px-[3px]'}`}>
+        {/* Left: Time + Signal */}
+        <div className={`flex items-center gap-[3px] pt-1 ${isAndroid ? (isBanner ? 'pl-8' : 'pl-6') : 'pl-0'}`}>
+          <div className={`${timeSize} font-bold tracking-tight leading-none min-w-[24px] text-center`} style={{ color }}>
+            {time}
           </div>
-          {/* Signal - High Fidelity */}
-          <svg width={sW} height={sH} viewBox="0 0 18 12" fill="white">
-            <rect x="0" y="8" width="3" height="4" rx="1" />
-            <rect x="4" y="6" width="3" height="6" rx="1" />
-            <rect x="8" y="3" width="3" height="9" rx="1" />
-            <rect x="12" y="0" width="3" height="12" rx="1" />
-          </svg>
+          {/* Signal bars */}
+          <div className="opacity-90 mt-[1px]">
+            <svg width={isBanner ? 13 : 10} height={sH} viewBox="0 0 18 12" fill={color}>
+              <rect x="0" y={isBanner ? 7 : 8} width="3" height={isBanner ? 5 : 4} rx="1" />
+              <rect x="4" y={isBanner ? 5 : 6} width="3" height={isBanner ? 7 : 6} rx="1" />
+              <rect x="8" y={isBanner ? 2 : 3} width="3" height={isBanner ? 10 : 9} rx="1" />
+              <rect x="12" y="0" width="3" height="12" rx="1" />
+            </svg>
+          </div>
         </div>
 
-        {/* Status Cluster - Right side */}
-        <div className="flex items-center gap-1.5 pt-1 pr-1">
-          
+        {/* Right side: WiFi + Battery */}
+        <div className={`flex items-center gap-[3px] pt-1 pr-0`}>
           {/* WiFi - High Fidelity */}
-          <svg width={sW} height={sH} viewBox="0 0 18 12" fill="white">
+          <svg width={isBanner ? 13 : 10} height={sH} viewBox="0 0 18 12" fill={color} className="opacity-95">
             <path d="M9 12L0 3.5C2.4 1.3 5.5 0 9 0C12.5 0 15.6 1.3 18 3.5L9 12Z" />
           </svg>
           
           {/* Battery - High Fidelity */}
-          <div className={`${isBanner ? 'w-[28px] h-[14px]' : 'w-[22px] h-[11px]'} border-1.5 border-white/40 rounded-[3.5px] relative flex items-center p-[1px]`}>
-            <div className="bg-white h-full w-[90%] rounded-[1.5px]" />
-            <div className={`absolute ${isBanner ? 'right-[-4.5px] w-[2px] h-[6px]' : 'right-[-3.5px] w-[1.5px] h-[4.5px]'} bg-white/40 rounded-r-full`} />
+          <div className={`${isBanner ? 'w-[32px] h-[16px]' : 'w-[20px] h-[10px]'} border-[1.5px] rounded-[4px] relative flex items-center p-[1px]`} style={{ borderColor: `${color}66` }}>
+            <div className="h-full w-[85%] rounded-[1.5px]" style={{ backgroundColor: color }} />
+            <div className={`absolute ${isBanner ? 'right-[-5px] w-[2.5px] h-[7px]' : 'right-[-3px] w-[1.5px] h-[4px]'} rounded-r-[2px]`} style={{ backgroundColor: `${color}66` }} />
           </div>
         </div>
       </div>
 
+      {/* Middle: Clock Layer */}
       <div className={`flex flex-col items-center flex-1 ${isBanner ? 'mt-10' : 'mt-5'}`}>
-        <div 
-          className={`font-semibold ${isBanner ? 'text-[18px]' : 'text-[10px]'} tracking-[0.05em] mb-[-4px] opacity-80`}
-          style={{ color: color === 'white' ? '#fff' : color }}
-        >
-          {date}
-        </div>
-        <div 
-          className={`font-bold tracking-[-0.01em] ${isBanner ? 'text-[92px]' : 'text-[52px]'} scale-y-110 drop-shadow-md`}
-          style={{ 
-            color: color === 'white' ? '#fff' : color,
-            fontFamily: 'system-ui, -apple-system, sans-serif' 
-          }}
-        >
-          {time}
-        </div>
+        {showClock && (
+          <>
+            <div 
+              className={`font-semibold ${isBanner ? 'text-[18px]' : 'text-[10px]'} tracking-[0.05em] mb-[-4px] opacity-80`}
+              style={{ color: color === 'white' ? '#fff' : color }}
+            >
+              {date}
+            </div>
+            <div 
+              className={`font-bold tracking-[-0.01em] ${isBanner ? 'text-[92px]' : 'text-[52px]'} scale-y-110 drop-shadow-md`}
+              style={{ 
+                color: color === 'white' ? '#fff' : color,
+                fontFamily: 'system-ui, -apple-system, sans-serif' 
+              }}
+            >
+              {time}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Bottom Actions */}
       <div className="flex flex-col items-center gap-4">
         <div className="flex w-full justify-between items-center px-4 mb-2">
           {/* Torch Icon - Frosted Glass Circle */}
-          <div className={`${actionSize} rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 shadow-lg ring-1 ring-black/10`}>
-            <svg width={isBanner ? "24" : "19"} height={isBanner ? "24" : "19"} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <div className={`${actionSize} rounded-full backdrop-blur-xl flex items-center justify-center shadow-lg ring-1 ring-black/10`} style={{ backgroundColor: color === 'white' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', border: `1px solid ${color === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}` }}>
+            <svg width={isBanner ? "24" : "19"} height={isBanner ? "24" : "19"} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 14V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v8" />
               <path d="M12 14v7" />
               <path d="M9 21h6" />
-              <circle cx="12" cy="9" r="1.5" fill="white" stroke="none" />
+              <circle cx="12" cy="9" r="1.5" fill={color} stroke="none" />
             </svg>
           </div>
           {/* Camera Icon - Frosted Glass Circle */}
-          <div className={`${actionSize} rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/20 shadow-lg ring-1 ring-black/10`}>
-            <svg width={isBanner ? "24" : "19"} height={isBanner ? "24" : "19"} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <div className={`${actionSize} rounded-full backdrop-blur-xl flex items-center justify-center shadow-lg ring-1 ring-black/10`} style={{ backgroundColor: color === 'white' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', border: `1px solid ${color === 'white' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}` }}>
+            <svg width={isBanner ? "24" : "19"} height={isBanner ? "24" : "19"} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
               <circle cx="12" cy="13" r="4" />
             </svg>
           </div>
         </div>
         {/* Home Indicator */}
-        <div className={`${isBanner ? 'w-24 h-[5px]' : 'w-12 h-1'} bg-white/30 rounded-full mb-1`} />
+        <div className={`${isBanner ? 'w-24 h-[5px]' : 'w-12 h-1'} rounded-full mb-1`} style={{ backgroundColor: color === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }} />
       </div>
     </div>
   )
 }
 
-export function PhoneSideButtons({ isBanner = false }) {
+export function PhoneSideButtons({ isBanner = false, isAndroid = false }) {
   // Studio-Grade Natural Titanium (Matches reference)
   const btnBg = 'linear-gradient(to bottom, #f2f2f7 0%, #d1d1d6 50%, #8e8e93 100%)' 
   const shadow = '0 0.5px 1px rgba(0,0,0,0.5)'
@@ -204,6 +224,36 @@ export function PhoneSideButtons({ isBanner = false }) {
   const w = isBanner ? '3px' : '2.5px'
   const offset = isBanner ? '-3px' : '-2.5px'
   
+  if (isAndroid) {
+    return (
+      <>
+        {/* Power Button (Right) */}
+        <div className="absolute top-[28%] rounded-l-[1px] z-30"
+          style={{ 
+            right: offset, 
+            width: w, 
+            height: isBanner ? '64px' : '36px', 
+            background: btnBg, 
+            boxShadow: shadow,
+            border: '0.3px solid rgba(0,0,0,0.2)',
+            borderRight: 'none'
+          }} />
+        
+        {/* Volume Rocker (Right - common on many Androids like OnePlus) */}
+        <div className="absolute top-[42%] rounded-l-[1px] z-30"
+          style={{ 
+            right: offset, 
+            width: w, 
+            height: isBanner ? '80px' : '44px', 
+            background: btnBg, 
+            boxShadow: shadow,
+            border: '0.3px solid rgba(0,0,0,0.2)',
+            borderRight: 'none'
+          }} />
+      </>
+    )
+  }
+
   return (
     <>
       {/* Power Button (Right) */}
@@ -298,6 +348,7 @@ export default function PhoneCard({ style, floatClass = 'animate-float' }) {
             isSmall={true} 
             color={STYLE_ACCENTS[style.id] || "white"}
             randomize={true}
+            isAndroid={false} // Gallery usually shows iOS defaults unless changed
           />
         </div>
 

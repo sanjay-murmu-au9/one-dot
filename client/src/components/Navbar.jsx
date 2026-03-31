@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Navbar() {
+  const { currentUser, logout } = useAuth()
+  const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
   const [visible, setVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -35,6 +38,15 @@ export default function Navbar() {
     setMenuOpen(false)
     setVisible(true)
   }, [location])
+
+  async function handleLogout() {
+    try {
+      await logout()
+      navigate('/login')
+    } catch (error) {
+      console.error("Failed to log out", error)
+    }
+  }
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transform transition-all duration-500 ease-in-out ${scrolled ? 'py-2' : 'py-4'} ${visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
@@ -71,6 +83,23 @@ export default function Navbar() {
             >
               About
             </Link>
+            {currentUser ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm px-4 py-2 rounded-xl transition-colors duration-200 hover:bg-black/5"
+                style={{ color: '#6e6e73' }}
+              >
+                Log Out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm px-4 py-2 rounded-xl transition-colors duration-200 hover:bg-black/5"
+                style={{ color: '#6e6e73' }}
+              >
+                Log In
+              </Link>
+            )}
             <Link
               to="/generate"
               id="nav-cta"
@@ -93,10 +122,15 @@ export default function Navbar() {
         </div>
 
         {/* Mobile dropdown */}
-        <div className={`md:hidden overflow-hidden transition-all duration-300 ${menuOpen ? 'max-h-40 pb-3' : 'max-h-0'}`}>
+        <div className={`md:hidden overflow-hidden transition-all duration-300 ${menuOpen ? 'max-h-52 pb-3' : 'max-h-0'}`}>
           <div className="flex flex-col gap-1 pt-2 border-t border-black/5">
             <Link to="/about" className="text-sm px-3 py-2.5 rounded-xl hover:bg-black/5 text-[#6e6e73] transition-colors">About</Link>
-            <Link to="/generate" className="btn-coral text-sm text-center">Create Wallpaper</Link>
+            {currentUser ? (
+              <button onClick={handleLogout} className="text-sm px-3 py-2.5 rounded-xl hover:bg-black/5 text-[#6e6e73] transition-colors text-left">Log Out</button>
+            ) : (
+              <Link to="/login" className="text-sm px-3 py-2.5 rounded-xl hover:bg-black/5 text-[#6e6e73] transition-colors">Log In</Link>
+            )}
+            <Link to="/generate" className="btn-coral text-sm text-center mt-2">Create Wallpaper</Link>
           </div>
         </div>
       </nav>
