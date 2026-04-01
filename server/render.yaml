@@ -3,7 +3,7 @@ services:
     name: one-dot-server
     runtime: node
     rootDir: server
-    buildCommand: sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev && npm install && npm run build
+    buildCommand: npm install --build-from-source=false && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
