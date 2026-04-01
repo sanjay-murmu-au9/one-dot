@@ -1,17 +1,14 @@
 import * as admin from 'firebase-admin';
 
 try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
+    credential: admin.credential.cert(serviceAccount),
   });
   console.log('✅ Firebase Admin Initialized');
 } catch (error) {
   console.error('❌ Firebase Admin Initialization Failed:', error);
-  console.log('⚠️ Please ensure FIREBASE_* environment variables are set.');
+  console.log('⚠️ Please ensure FIREBASE_SERVICE_ACCOUNT_JSON env var is set.');
 }
 
 export const db = admin.firestore();
