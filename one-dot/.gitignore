@@ -3,3 +3,8 @@ server/node_modules/
 node_modules/
 .env
 *.env
+.DS_Store
+server/dist/
+one-dot/
+cors.json
+java_files.txt
