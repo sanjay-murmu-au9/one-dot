@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import PhoneCard, { WALLPAPER_STYLES } from '../components/PhoneCard'
 import DraggableAutoScroll from '../components/DraggableAutoScroll'
+import SwipeableGallery from '../components/SwipeableGallery'
 
 // Marquee strip items
 const MARQUEE_ITEMS = [
@@ -209,9 +210,13 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Dual Marquee Rows */}
-        <div className="space-y-4 marquee-mask">
-          {/* Row 1: Leftward */}
+        {/* Mobile: Swipeable card stack */}
+        <div className="block md:hidden">
+          <SwipeableGallery />
+        </div>
+
+        {/* Desktop: Dual auto-scroll rows */}
+        <div className="hidden md:block space-y-4 marquee-mask">
           <DraggableAutoScroll direction="left" speed={1}>
             {WALLPAPER_STYLES.map((style, i) => (
               <div key={`${style.id}-row1-${i}`} className="flex-shrink-0">
@@ -219,8 +224,6 @@ export default function HomePage() {
               </div>
             ))}
           </DraggableAutoScroll>
-
-          {/* Row 2: Rightward - Trending & Loved */}
           <DraggableAutoScroll direction="right" speed={1}>
             {TRENDING_WALLPAPERS.map((style, i) => (
               <div key={`${style.id}-trending-${i}`} className="flex-shrink-0">

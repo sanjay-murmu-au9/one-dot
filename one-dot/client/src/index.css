@@ -38,11 +38,20 @@ body {
 
 /* ── Hidden Scrollbar Utility ──────────────────────── */
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ── Mobile gallery snap scroll ────────────────────── */
+.mobile-gallery::-webkit-scrollbar {
+  display: none;
+}
+.mobile-gallery {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ── Typography ────────────────────────────────────── */

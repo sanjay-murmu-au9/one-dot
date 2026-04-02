@@ -5,6 +5,8 @@ import {
   signOut, 
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
@@ -41,6 +43,11 @@ export function AuthProvider({ children }) {
 
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
+    const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+    if (isNative) {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
     const userCredential = await signInWithPopup(auth, provider);
     await setDoc(doc(db, 'users', userCredential.user.uid), {
       email: userCredential.user.email,
@@ -50,6 +57,16 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    // Handle redirect result on app load (for native Android)
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        await setDoc(doc(db, 'users', result.user.uid), {
+          email: result.user.email,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    }).catch(() => {});
+
     const unsubscribe = onAuthStateChanged(auth, user => {
       setCurrentUser(user);
       setLoading(false);

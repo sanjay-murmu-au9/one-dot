@@ -347,8 +347,8 @@ export default function PhoneCard({ style, floatClass = 'animate-float' }) {
           <PhoneUIOverlay 
             isSmall={true} 
             color={STYLE_ACCENTS[style.id] || "white"}
-            randomize={true}
-            isAndroid={false} // Gallery usually shows iOS defaults unless changed
+            randomize={false}
+            isAndroid={false}
           />
         </div>
 
