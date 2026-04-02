@@ -7,7 +7,7 @@ import wallpaperRoutes from './routes/wallpaper.routes';
 const app: Application = express();
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4173'] }));
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4173', 'https://sanjay-murmu-au9.github.io'] }));
 app.use(express.json());
 
 // Main App Routes
