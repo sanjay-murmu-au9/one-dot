@@ -3,6 +3,7 @@ import cors from 'cors';
 import { errorHandler } from './middlewares/error.middleware';
 import healthRoutes from './routes/health.routes';
 import wallpaperRoutes from './routes/wallpaper.routes';
+import authRoutes from './routes/auth.routes';
 
 const app: Application = express();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 // Main App Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/wallpaper', wallpaperRoutes);
+app.use('/api/auth', authRoutes);
 
 // For backwards compatibility during transition or direct root hits
 app.use('/health', healthRoutes);

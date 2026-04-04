@@ -87,6 +87,21 @@ export function useAutoWallpaperUpdate() {
     }
   };
 
+  const triggerNow = async () => {
+    if (!isNative) return { success: false, error: 'Not available on web' };
+    setLoading(true);
+    try {
+      const { WallpaperPlugin } = await import('../plugins/WallpaperPlugin');
+      const result = await WallpaperPlugin.triggerNow();
+      await loadStatus();
+      return { success: true, message: result.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     isNative,
     isEnabled,
@@ -94,6 +109,7 @@ export function useAutoWallpaperUpdate() {
     loading,
     enableAutoUpdate,
     disableAutoUpdate,
+    triggerNow,
     refresh: loadStatus
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,10 +6,15 @@ import { motion } from 'framer-motion';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, currentUser } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser) navigate('/');
+  }, [currentUser]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -17,25 +22,24 @@ export default function Login() {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate('/');
     } catch (err) {
-      console.error(err);
       setError(err.message || 'Failed to sign in');
     }
     setLoading(false);
   }
 
   async function handleGoogleLogin() {
+    if (googleLoading) return;
     try {
-      if (loginWithGoogle) {
-        await loginWithGoogle();
-        navigate('/');
-      } else {
-        alert("Google auth not yet implemented in AuthContext");
-      }
+      setError('');
+      setGoogleLoading(true);
+      await loginWithGoogle();
     } catch (err) {
-      console.error(err);
-      alert(err.message || 'Failed to sign in with Google');
+      if (err.code !== 'auth/cancelled-popup-request' && err.code !== 'auth/popup-closed-by-user') {
+        setError(err.message || 'Failed to sign in with Google');
+      }
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -93,7 +97,8 @@ export default function Login() {
 
         <button 
           onClick={handleGoogleLogin}
-          className="w-full bg-white border border-gray-200 text-gray-700 py-3.5 px-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm"
+          disabled={googleLoading}
+          className="w-full bg-white border border-gray-200 text-gray-700 py-3.5 px-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

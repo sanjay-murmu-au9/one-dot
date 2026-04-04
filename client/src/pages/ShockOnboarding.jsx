@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { calculateLifeStats, validateDOB, formatNumber, getPhilosophicalMessage } from '../utils/lifeCalculations'
 import { useAuth } from '../contexts/AuthContext'
 import { db } from '../firebase'
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
+import LoginModal from '../components/LoginModal'
 
 /**
  * Shock Onboarding Page
@@ -26,6 +27,7 @@ export default function ShockOnboarding() {
   const [year, setYear] = useState('')
   const [error, setError] = useState('')
   const [lifeStats, setLifeStats] = useState(null)
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
 
   // Refs for auto-advancing between DOB fields
   const dayRef = useRef(null)
@@ -44,13 +46,39 @@ export default function ShockOnboarding() {
   useEffect(() => {
     document.title = 'Begin your journey — one dot'
 
-    // Check if user has already completed onboarding
-    const cachedDOB = localStorage.getItem('one_dot_dob')
-    if (cachedDOB) {
-      // User has already seen the shock moment, skip to generator
-      navigate('/generate', { replace: true })
+    async function checkOnboardingStatus() {
+      // 1. Check localStorage first (quick check)
+      const cachedDOB = localStorage.getItem('one_dot_dob')
+      if (cachedDOB) {
+        navigate('/generate', { replace: true })
+        return
+      }
+
+      // 2. If logged in, also check Firestore
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
+          if (userDoc.exists()) {
+            const data = userDoc.data()
+            if (data.onboardingCompleted && data.dob) {
+              // User already completed onboarding in Firestore - cache locally and redirect
+              localStorage.setItem('one_dot_dob', data.dob)
+              if (data.name) localStorage.setItem('one_dot_name', data.name)
+              navigate('/generate', { replace: true })
+              return
+            }
+          }
+        } catch (err) {
+          console.error('Error checking onboarding status:', err)
+        }
+      }
+
+      // 3. User needs onboarding
+      setCheckingOnboarding(false)
     }
-  }, [navigate])
+
+    checkOnboardingStatus()
+  }, [navigate, currentUser])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -122,6 +150,30 @@ export default function ShockOnboarding() {
     navigate('/generate')
   }
 
+
+  // Show login modal if user is not authenticated
+  if (!currentUser) {
+    return (
+      <div
+        className="fixed inset-0 flex items-center justify-center"
+        style={{ background: '#0b0b0c' }}
+      >
+        <LoginModal onClose={() => navigate('/')} />
+      </div>
+    )
+  }
+
+  // Show loading while checking onboarding status
+  if (checkingOnboarding) {
+    return (
+      <div
+        className="fixed inset-0 flex items-center justify-center"
+        style={{ background: '#0b0b0c' }}
+      >
+        <span className="w-6 h-6 border-2 border-gray-600 border-t-gray-200 rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div

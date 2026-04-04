@@ -13,10 +13,11 @@ export class WallpaperPluginWeb {
   }
 
   async getAutoUpdateStatus() {
-    return {
-      enabled: false,
-      lastUpdate: 0,
-      apiUrl: ''
-    };
+    return { enabled: false, lastUpdate: 0, apiUrl: '' };
+  }
+
+  async triggerNow() {
+    console.warn('WallpaperPlugin.triggerNow() not available on web');
+    return { success: false, error: 'Not available on web' };
   }
 }

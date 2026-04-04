@@ -66,6 +66,20 @@ public class WallpaperPlugin extends Plugin {
     }
 
     /**
+     * Trigger wallpaper update immediately (for testing)
+     */
+    @PluginMethod
+    public void triggerNow(PluginCall call) {
+        androidx.work.OneTimeWorkRequest testRequest =
+            new androidx.work.OneTimeWorkRequest.Builder(DailyWallpaperWorker.class).build();
+        WorkManager.getInstance(getContext()).enqueue(testRequest);
+        JSObject ret = new JSObject();
+        ret.put("success", true);
+        ret.put("message", "Wallpaper refresh triggered. Check lock screen in a few seconds.");
+        call.resolve(ret);
+    }
+
+    /**
      * Enable automatic daily wallpaper updates
      * @param call - expects { apiUrl: string, enabled: boolean }
      */

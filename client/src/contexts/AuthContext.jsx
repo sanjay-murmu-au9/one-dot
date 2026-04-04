@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
   signInWithPopup,
-  GoogleAuthProvider
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -39,25 +42,40 @@ export function AuthProvider({ children }) {
     return signOut(auth);
   }
 
+  function resetPassword(email) {
+    return sendPasswordResetEmail(auth, email);
+  }
+
   async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
+    const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+    if (isNative) {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
     const userCredential = await signInWithPopup(auth, provider);
-    
-    // Merge user profile in Firestore
     await setDoc(doc(db, 'users', userCredential.user.uid), {
       email: userCredential.user.email,
       updatedAt: new Date().toISOString()
     }, { merge: true });
-
     return userCredential;
   }
 
   useEffect(() => {
+    // Handle redirect result on app load (for native Android)
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        await setDoc(doc(db, 'users', result.user.uid), {
+          email: result.user.email,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    }).catch(() => {});
+
     const unsubscribe = onAuthStateChanged(auth, user => {
       setCurrentUser(user);
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
@@ -66,7 +84,8 @@ export function AuthProvider({ children }) {
     signup,
     login,
     loginWithGoogle,
-    logout
+    logout,
+    resetPassword
   };
 
   return (
