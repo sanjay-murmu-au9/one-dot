@@ -20,7 +20,7 @@ jobs:
           cache-dependency-path: client/package-lock.json
 
       - name: Install & Build
-        working-directory: one-dot/client
+        working-directory: client
         run: |
           npm ci
           npm run build
@@ -29,4 +29,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: one-dot/client/dist
+          publish_dir: client/dist
