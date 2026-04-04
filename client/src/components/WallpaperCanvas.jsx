@@ -87,7 +87,8 @@ export function loadHourglassImage() {
     const imageIndex = getHourglassImageIndex()
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    img.src = `/assets/hourglass/hourglass-${imageIndex}.png`
+    // Use Vite's BASE_URL for robust asset loading in dev and prod
+    img.src = `${import.meta.env.BASE_URL}assets/hourglass/hourglass-${imageIndex}.png`
     img.onload = () => resolve(img)
     img.onerror = (err) => {
       console.error('Failed to load hourglass image:', err)
