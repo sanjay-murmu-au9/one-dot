@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1001399438142",
+    "project_id": "onedot-app-23614",
+    "storage_bucket": "onedot-app-23614.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1001399438142:android:812bd3d3d3200b1a103a6f",
+        "android_client_info": {
+          "package_name": "com.sanjayamurmu.onedot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1001399438142-fu65ujs8vq9a9gghlf8puag1r75kpv65.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sanjayamurmu.onedot",
+            "certificate_hash": "07b1edce87ca157af1660a679920a622622b45fc"
+          }
+        },
+        {
+          "client_id": "1001399438142-9bgd5aovu60hqvtbmpvemgh75klbrm3l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5PqiyVtSniLw0tobhGfJrh16RjX27tRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1001399438142-9bgd5aovu60hqvtbmpvemgh75klbrm3l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

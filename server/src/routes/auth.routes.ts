@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { resetPassword, verifyToken } from '../controllers/auth.controller';
+import { resetPassword, verifyToken, deleteAccount } from '../controllers/auth.controller';
 
 const router = Router();
 
@@ -16,5 +16,12 @@ router.post('/reset-password', resetPassword);
  * @access  Public
  */
 router.post('/verify-token', verifyToken);
+
+/**
+ * @route   DELETE /api/auth/delete-account
+ * @desc    Delete user account
+ * @access  Private (requires valid token)
+ */
+router.delete('/delete-account', deleteAccount);
 
 export default router;

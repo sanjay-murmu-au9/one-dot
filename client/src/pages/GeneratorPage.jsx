@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import LoginModal from '../components/LoginModal'
+import LifeSummaryModal from '../components/LifeSummaryModal'
 import { RESOLUTIONS, DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, getMementoCurrentWeekPos, getMementoGoalWeekPos, drawTimerOverlay, loadHourglassImage } from '../components/WallpaperCanvas'
 import { WALLPAPER_STYLES, PhoneUIOverlay, PhoneSideButtons } from '../components/PhoneCard'
 import { useAuth } from '../contexts/AuthContext'
@@ -56,6 +57,7 @@ export default function GeneratorPage() {
   const [mmNote, setMmNote]           = useState('')
 
   const { currentUser } = useAuth()
+  const [showLifeSummary, setShowLifeSummary] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [syncStatus, setSyncStatus] = useState(null) // 'success' | 'error' | null
 
@@ -290,7 +292,7 @@ export default function GeneratorPage() {
         },
         updatedAt: new Date().toISOString()
       }, { merge: true })
-
+      
       setSyncStatus('success')
       setTimeout(() => setSyncStatus(null), 4000)
     } catch (err) {
@@ -349,10 +351,30 @@ export default function GeneratorPage() {
           >
             Create your wallpaper.
           </h1>
-          <p className="mt-2 text-base" style={{ color: '#6e6e73' }}>
-            Customize below, watch the preview update live, then download.
-          </p>
+          <div className="mt-2 flex items-center gap-3 flex-wrap">
+            <p className="text-base" style={{ color: '#6e6e73' }}>
+              Customize below, watch the preview update live, then download.
+            </p>
+            {localStorage.getItem('one_dot_dob') && (
+              <button
+                onClick={() => setShowLifeSummary(true)}
+                className="inline-flex items-center gap-1.5 text-sm font-medium transition-all hover:opacity-80"
+                style={{ color: '#ff5f45' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+                See your life story →
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Life Summary Modal */}
+        {showLifeSummary && (
+          <LifeSummaryModal onClose={() => setShowLifeSummary(false)} />
+        )}
 
         {/* Split layout: Preview on top for mobile, right for desktop */}
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-10 items-start">
@@ -361,8 +383,8 @@ export default function GeneratorPage() {
           <div className="lg:hidden w-full flex flex-col items-center gap-1 py-4 px-6">
             <div className="relative">
               {/* Subtle shadow glow behind phone */}
-              <div
-                className="absolute inset-0 blur-[60px] opacity-20"
+              <div 
+                className="absolute inset-0 blur-[60px] opacity-20" 
                 style={{ background: activeAccent, transform: 'scale(1.5)' }}
               />
               <div
@@ -507,6 +529,34 @@ export default function GeneratorPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Legend — lifetime mode only */}
+                  {mmDensity === 'life' && (
+                    <div className="flex items-center gap-5 px-1 py-1">
+                      {[
+                        { label: 'Past',    bg: mmColor,   ring: null,                shadow: null },
+                        { label: 'Present', bg: '#ffffff', ring: `2px solid ${mmColor}`, shadow: `0 0 0 3px ${mmColor}30` },
+                        { label: 'Future',  bg: '#e8e8ed', ring: '1px solid #d1d1d6', shadow: null },
+                      ].map(item => (
+                        <div key={item.label} className="flex items-center gap-1.5">
+                          <div
+                            style={{
+                              width: 11,
+                              height: 11,
+                              borderRadius: mmShape === 'circle' ? '50%' : 3,
+                              background: item.bg,
+                              border: item.ring || 'none',
+                              boxShadow: item.shadow || 'none',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span className="text-xs font-medium" style={{ color: '#86868b' }}>
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Birth Year (only for lifetime mode) */}
                   {mmDensity === 'life' && (
@@ -974,8 +1024,8 @@ export default function GeneratorPage() {
 
             <div className="relative">
                {/* Subtle shadow glow behind phone */}
-               <div
-                className="absolute inset-0 blur-3xl opacity-15"
+               <div 
+                className="absolute inset-0 blur-3xl opacity-15" 
                 style={{ background: activeAccent, transform: 'scale(1.3)' }}
               />
               {/* Device frame preview */}

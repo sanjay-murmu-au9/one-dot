@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { auth } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 
 /**
  * Send password reset email
@@ -102,5 +102,66 @@ export const verifyToken = async (
   } catch (error: any) {
     console.error('[Auth] Token verification error:', error);
     res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
+/**
+ * Delete user account
+ * DELETE /api/auth/delete-account
+ * Headers: { Authorization: 'Bearer <token>' }
+ */
+export const deleteAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'No token provided' });
+      return;
+    }
+
+    if (!auth || !db) {
+      res.status(503).json({ error: 'Authentication service unavailable' });
+      return;
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(token);
+    const uid = decodedToken.uid;
+
+    // Delete user document from Firestore
+    try {
+      await db.collection('users').doc(uid).delete();
+      console.log(`[Auth] Deleted Firestore document for user: ${uid}`);
+    } catch (firestoreError) {
+      console.error('[Auth] Error deleting Firestore document:', firestoreError);
+      // Continue with auth deletion even if Firestore fails
+    }
+
+    // Delete user from Firebase Auth
+    await auth.deleteUser(uid);
+    console.log(`[Auth] Deleted Firebase Auth user: ${uid}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Account deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('[Auth] Delete account error:', error);
+
+    if (error.code === 'auth/user-not-found') {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (error.code === 'auth/invalid-user-token' || error.code === 'auth/argument-error') {
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
+    }
+
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 };

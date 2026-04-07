@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Config for One-Dot
+    - Blocks all cleartext (HTTP) traffic in production
+    - Only HTTPS connections are permitted
+    - The DailyWallpaperWorker API URL must therefore always be HTTPS
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

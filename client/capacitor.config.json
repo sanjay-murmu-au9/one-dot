@@ -1,5 +1,12 @@
 {
   "appId": "com.sanjayamurmu.onedot",
   "appName": "One-Dot",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "https://onedot-app-23614.firebaseapp.com",
+      "https://accounts.google.com"
+    ]
+  }
 }

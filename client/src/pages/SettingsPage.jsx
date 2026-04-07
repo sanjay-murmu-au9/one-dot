@@ -14,14 +14,19 @@ import {
   Sparkles,
   Mail,
   Lock,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { currentUser, logout, resetPassword } = useAuth()
+  const { currentUser, logout, resetPassword, deleteAccount } = useAuth()
   const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState(null)
   const [resetLoading, setResetLoading] = useState(false)
   const [resetSuccess, setResetSuccess] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   // Get user's display name or email
   const getUserName = () => {
@@ -58,6 +63,21 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleDeleteAccount() {
+    if (deleteLoading) return
+    try {
+      setDeleteLoading(true)
+      setDeleteError('')
+      await deleteAccount()
+      // Account deleted successfully, navigate to login
+      navigate('/login')
+    } catch (error) {
+      console.error('Failed to delete account', error)
+      setDeleteError(error.message || 'Failed to delete account. Please try again.')
+      setDeleteLoading(false)
+    }
+  }
+
   const menuItems = [
     { id: 'profile', icon: User, label: 'Profile', hasDetail: true },
     { id: 'api-tokens', icon: KeyRound, label: 'API Tokens', hasDetail: true },
@@ -91,11 +111,49 @@ export default function SettingsPage() {
               onResetPassword={handleResetPassword}
               resetLoading={resetLoading}
               resetSuccess={resetSuccess}
+              onDeleteAccount={() => setShowDeleteConfirm(true)}
+              deleteError={deleteError}
             />
           ) : (
             <ComingSoonSection title={menuItems.find(m => m.id === activeSection)?.label || activeSection} />
           )}
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#1d1d1f] text-center mb-2">
+                Delete Account?
+              </h3>
+              <p className="text-sm text-[#6e6e73] text-center mb-6">
+                This will permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteLoading}
+                  className="w-full py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Yes, Delete My Account'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false)
+                    setDeleteError('')
+                  }}
+                  disabled={deleteLoading}
+                  className="w-full py-3 rounded-xl border border-gray-200 text-[#1d1d1f] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -193,7 +251,7 @@ export default function SettingsPage() {
   )
 }
 
-function ProfileSection({ email, onResetPassword, resetLoading, resetSuccess }) {
+function ProfileSection({ email, onResetPassword, resetLoading, resetSuccess, onDeleteAccount, deleteError }) {
   return (
     <div className="space-y-4">
       {/* Email */}
@@ -245,6 +303,28 @@ function ProfileSection({ email, onResetPassword, resetLoading, resetSuccess }) 
             <p className="text-xs text-[#6e6e73]">Basic features</p>
           </div>
         </div>
+      </div>
+
+      {/* Delete Account */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-red-100">
+        <div className="flex items-center gap-3 mb-3">
+          <Trash2 size={18} className="text-red-500" />
+          <span className="text-sm font-medium text-red-500">Delete Account</span>
+        </div>
+        <p className="text-xs text-[#6e6e73] mb-3 px-1">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
+        <button
+          onClick={onDeleteAccount}
+          className="w-full py-3 rounded-xl bg-red-50 text-[15px] font-medium text-red-600 hover:bg-red-100 transition-colors"
+        >
+          Delete My Account
+        </button>
+        {deleteError && (
+          <p className="text-xs text-red-600 mt-2 px-1">
+            {deleteError}
+          </p>
+        )}
       </div>
     </div>
   )

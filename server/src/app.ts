@@ -8,7 +8,18 @@ import authRoutes from './routes/auth.routes';
 const app: Application = express();
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4173', 'https://sanjay-murmu-au9.github.io'] }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://sanjay-murmu-au9.github.io',
+    'capacitor://localhost',
+    'http://localhost',
+    'ionic://localhost',
+    'http://localhost:8100'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Main App Routes

@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import {
   User,
   KeyRound,
@@ -30,6 +32,25 @@ export default function AccountModal({ onClose }) {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetSuccess, setResetSuccess] = useState(false)
   const [resetError, setResetError] = useState('')
+  const [userProfile, setUserProfile] = useState(null)
+
+  // Fetch user profile data from Firestore
+  useEffect(() => {
+    async function fetchUserProfile() {
+      if (!currentUser?.uid) return
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
+        if (userDoc.exists()) {
+          setUserProfile(userDoc.data())
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
+      }
+    }
+
+    fetchUserProfile()
+  }, [currentUser])
 
   // Close on ESC key
   useEffect(() => {
@@ -157,6 +178,8 @@ export default function AccountModal({ onClose }) {
         <div className="flex-1 p-8 overflow-y-auto bg-white">
           {activeSection === 'profile' ? (
             <ProfileContent
+              name={userProfile?.name}
+              dob={userProfile?.dob}
               email={currentUser?.email}
               onUpdateEmail={handleUpdateEmail}
               onResetPassword={handleResetPassword}
@@ -177,7 +200,7 @@ export default function AccountModal({ onClose }) {
   )
 }
 
-function ProfileContent({ email, onUpdateEmail, onResetPassword, resetLoading, resetSuccess, resetError, onUpgrade }) {
+function ProfileContent({ name, dob, email, onUpdateEmail, onResetPassword, resetLoading, resetSuccess, resetError, onUpgrade }) {
   return (
     <div>
       {/* Header */}
@@ -190,6 +213,34 @@ function ProfileContent({ email, onUpdateEmail, onResetPassword, resetLoading, r
       <div className="border-t border-gray-200 my-6" />
 
       <div className="space-y-6">
+        {/* Name (Read-only) */}
+        <div>
+          <label className="block text-sm font-medium text-[#1d1d1f] mb-3">
+            Name
+          </label>
+          <input
+            type="text"
+            value={name || 'Not set'}
+            readOnly
+            disabled
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm text-[#6e6e73] cursor-not-allowed"
+          />
+        </div>
+
+        {/* Date of Birth (Read-only) */}
+        <div>
+          <label className="block text-sm font-medium text-[#1d1d1f] mb-3">
+            Date of Birth
+          </label>
+          <input
+            type="text"
+            value={dob || 'Not set'}
+            readOnly
+            disabled
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm text-[#6e6e73] cursor-not-allowed"
+          />
+        </div>
+
         {/* Email Address */}
         <div>
           <label className="block text-sm font-medium text-[#1d1d1f] mb-3">

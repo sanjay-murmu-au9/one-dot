@@ -57,6 +57,9 @@ public class WallpaperPlugin extends Plugin {
                 wm.setBitmap(decodedByte, null, true, WallpaperManager.FLAG_LOCK);
             }
 
+            // Free native memory — wallpaper bitmaps can be ~11 MB uncompressed
+            decodedByte.recycle();
+
             JSObject ret = new JSObject();
             ret.put("success", true);
             call.resolve(ret);
@@ -148,11 +151,12 @@ public class WallpaperPlugin extends Plugin {
             .setConstraints(constraints)
             .build();
 
-        // Schedule work (replace existing if any)
+        // Schedule work — UPDATE keeps the existing schedule if unchanged,
+        // avoiding unnecessary restarts (REPLACE was deprecated in WorkManager 2.8)
         WorkManager.getInstance(getContext())
             .enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.REPLACE,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 dailyWorkRequest
             );
     }

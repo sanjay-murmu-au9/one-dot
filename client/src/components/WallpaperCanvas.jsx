@@ -7,16 +7,16 @@ export const RESOLUTIONS = {
 }
 
 export const STYLE_ACCENTS = {
-  'dot-grid':       '#a78bfa',
-  'large-countdown':'#60a5fa',
-  'progress-bar':   '#34d399',
+  'dot-grid': '#a78bfa',
+  'large-countdown': '#60a5fa',
+  'progress-bar': '#34d399',
   'quarterly-view': '#1a1a1a',
-  'yearly-view':    '#6ee7b7',
-  'carpe-diem':     '#fbbf24',
-  'memento-mori':   '#94a3b8',
-  'weekly-grid':    '#22d3ee',
-  'life-view':      '#a3e635',
-  'special-dates':  '#f472b6',
+  'yearly-view': '#6ee7b7',
+  'carpe-diem': '#fbbf24',
+  'memento-mori': '#94a3b8',
+  'weekly-grid': '#22d3ee',
+  'life-view': '#a3e635',
+  'special-dates': '#f472b6',
 }
 
 export function getDaysLeft(targetDate) {
@@ -74,11 +74,11 @@ function getHourglassProgress() {
 function getHourglassImageIndex() {
   const progress = getHourglassProgress()
 
-  // 5 images: divide progress into 5 equal segments
-  const imageIndex = Math.floor(progress * 5)
+  // 4 images: divide progress into 4 equal segments
+  const imageIndex = Math.floor(progress * 4)
 
-  // Clamp to 0-4 range (safety)
-  return Math.max(0, Math.min(4, imageIndex))
+  // Clamp to 0-3 range (safety)
+  return Math.max(0, Math.min(3, imageIndex))
 }
 
 // Helper function to load hourglass image (exported for use in hooks)
@@ -87,8 +87,7 @@ export function loadHourglassImage() {
     const imageIndex = getHourglassImageIndex()
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    // Use Vite's BASE_URL for robust asset loading in dev and prod
-    img.src = `${import.meta.env.BASE_URL}assets/hourglass/hourglass-${imageIndex}.png`
+    img.src = `/assets/hourglass/hourglass-${imageIndex}.png`
     img.onload = () => resolve(img)
     img.onerror = (err) => {
       console.error('Failed to load hourglass image:', err)
@@ -159,13 +158,13 @@ function drawDotGrid(ctx, w, h, daysLeft, accent, bgImage) {
   const pastDots = Math.max(0, Math.min(totalDots, totalDots - Math.round((daysLeft / 365) * totalDots)))
   const cols = 10
   const rows = Math.ceil(totalDots / cols)
-  const dotR  = w * 0.022
-  const gapX  = (w * 0.76) / (cols - 1)
-  const gapY  = gapX * 1.1
+  const dotR = w * 0.022
+  const gapX = (w * 0.76) / (cols - 1)
+  const gapY = gapX * 1.1
   const gridW = gapX * (cols - 1)
   const gridH = gapY * (rows - 1)
-  const ox    = (w - gridW) / 2
-  const oy    = h * 0.52
+  const ox = (w - gridW) / 2
+  const oy = h * 0.52
 
   for (let i = 0; i < totalDots; i++) {
     const col = i % cols
@@ -261,7 +260,7 @@ function drawProgressBar(ctx, w, h, daysLeft, accent, bgImage) {
   // Bar track
   const bw = w * 0.72, bh = w * 0.022
   const bx = (w - bw) / 2, by = h * 0.63
-  const r  = bh / 2
+  const r = bh / 2
 
   ctx.fillStyle = 'rgba(255,255,255,0.08)'
   ctx.beginPath()
@@ -299,7 +298,7 @@ function drawQuarterlyView(ctx, w, h, daysLeft, accent, bgImage) {
   const currentYear = now.getFullYear()
   const todayDate = now.getDate()
   const currentMonth = now.getMonth() // 0-11
-  
+
   // Calculate the current quarter start month
   const qStartMonth = Math.floor(currentMonth / 3) * 3
   const qMonths = [qStartMonth, qStartMonth + 1, qStartMonth + 2]
@@ -310,7 +309,7 @@ function drawQuarterlyView(ctx, w, h, daysLeft, accent, bgImage) {
   const calendarW = w - (calendarPadding * 2)
   const monthGap = w * 0.08
   const monthW = (calendarW - (monthGap * 2)) / 3
-  
+
   // The layout starts below the huge clock.
   const startY = h * 0.52
 
@@ -320,12 +319,12 @@ function drawQuarterlyView(ctx, w, h, daysLeft, accent, bgImage) {
 
     const daysInMonth = new Date(currentYear, m + 1, 0).getDate()
     const firstDay = new Date(currentYear, m, 1).getDay() // 0 = Sun, 1 = Mon, ...
-    
+
     // Convert 0=Sun, 1=Mon ... to 0=Mon, 1=Tue ... 6=Sun
     const startOffset = (firstDay + 6) % 7
-    
+
     const mx = calendarPadding + i * (monthW + monthGap)
-    
+
     // Month Header
     ctx.textAlign = 'center'
     setFont(ctx, '600', w * 0.02, 'system-ui, -apple-system, sans-serif')
@@ -336,22 +335,22 @@ function drawQuarterlyView(ctx, w, h, daysLeft, accent, bgImage) {
     const numCols = 7
     const colW = monthW / numCols
     const rowH = w * 0.035
-    
+
     // Draw day letters (optional, screenshot doesn't show them, just numbers)
     // Wait, screenshot shows 2 3 4 5 6 7 8 ... just the numbers!
-    
+
     const numsStartY = startY + w * 0.04
     ctx.textAlign = 'center'
     setFont(ctx, '700', w * 0.02, 'system-ui, -apple-system, sans-serif')
-    
+
     for (let d = 1; d <= daysInMonth; d++) {
       const pos = startOffset + (d - 1)
       const col = pos % numCols
       const row = Math.floor(pos / numCols)
-      
+
       const x = mx + (col * colW) + (colW / 2)
       const y = numsStartY + (row * rowH)
-      
+
       // Determine if past or future
       let isPastOrCurrent = false
       if (m < currentMonth) {
@@ -359,7 +358,7 @@ function drawQuarterlyView(ctx, w, h, daysLeft, accent, bgImage) {
       } else if (m === currentMonth && d <= todayDate) {
         isPastOrCurrent = true
       }
-      
+
       ctx.fillStyle = isPastOrCurrent ? '#1c1c1e' : 'rgba(0,0,0,0.1)'
       ctx.fillText(d.toString(), x, y)
     }
@@ -375,17 +374,17 @@ function drawQuarterlyView(ctx, w, h, daysLeft, accent, bgImage) {
   // Sub Footer: ONEDOT.TODAY
   const urlY = footerY + h * 0.025
   setFont(ctx, '600', w * 0.02, 'system-ui, -apple-system, sans-serif')
-  
+
   const urlText = 'ONEDOT.TODAY'
   const urlWidth = ctx.measureText(urlText).width
   const dotX = w / 2 - urlWidth / 2 - w * 0.025
   const dotY = urlY - w * 0.007
-  
+
   ctx.beginPath()
   ctx.arc(dotX, dotY, w * 0.006, 0, Math.PI * 2)
   ctx.fillStyle = '#ef4444' // Red dot
   ctx.fill()
-  
+
   ctx.fillStyle = 'rgba(0,0,0,0.3)'
   ctx.fillText(urlText, w / 2 + w * 0.012, urlY)
 }
@@ -399,64 +398,64 @@ function drawYearlyView(ctx, w, h, daysLeft, accent, bgImage) {
   const year = now.getFullYear()
   const currentMonth = now.getMonth()
   const currentDate = now.getDate()
-  
-  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC']
-  
+
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
   // Calculate days in each month for the current year
   const daysInMonth = months.map((_, i) => new Date(year, i + 1, 0).getDate())
-  
+
   // Grid layout for 3 columns x 4 rows
   const gridCols = 3
   const gridRows = 4
-  
+
   const calendarPadding = w * 0.16
   const calendarW = w - (calendarPadding * 2)
   const monthGapX = w * 0.10
   const monthGapY = h * 0.04
-  
+
   // Calculate width of a single month block
   const monthW = (calendarW - (monthGapX * (gridCols - 1))) / gridCols
-  
+
   // Dot properties inside a month
   const dotCols = 7
   const dotGap = monthW * 0.11
   const dotSize = (monthW - (dotGap * (dotCols - 1))) / dotCols
   const dotRadius = dotSize / 2
-  
+
   const calendarH = gridRows * (6 * dotSize + 5 * dotGap + w * 0.06) + (gridRows - 1) * monthGapY
   const startY = h * 0.33 // Start below the lock screen clock
-  
+
   // Draw the months
   for (let m = 0; m < 12; m++) {
     const gridX = m % gridCols
     const gridY = Math.floor(m / gridCols)
-    
+
     // Top-left coordinate for this month's block
     const mx = calendarPadding + gridX * (monthW + monthGapX)
     const my = startY + gridY * (6 * dotSize + 5 * dotGap + w * 0.06 + monthGapY)
-    
+
     // Month Label
     ctx.textAlign = 'center'
     setFont(ctx, '600', w * 0.022, 'system-ui, -apple-system, sans-serif')
     ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'
     ctx.fillText(months[m], mx + (monthW / 2), my)
-    
+
     // Draw dots
     const days = daysInMonth[m]
     const dotsStartY = my + w * 0.035
-    
+
     for (let d = 0; d < days; d++) {
       const dotX = mx + (d % dotCols) * (dotSize + dotGap) + dotRadius
       const dotY = dotsStartY + Math.floor(d / dotCols) * (dotSize + dotGap) + dotRadius
-      
+
       const isPastMonth = m < currentMonth
       const isPastDay = m === currentMonth && d < (currentDate - 1)
       const isToday = m === currentMonth && d === (currentDate - 1)
       const isPast = isPastMonth || isPastDay
-      
+
       ctx.beginPath()
       ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2)
-      
+
       if (isPast || isToday) {
         ctx.fillStyle = accent
         if (isToday) {
@@ -469,56 +468,56 @@ function drawYearlyView(ctx, w, h, daysLeft, accent, bgImage) {
         ctx.fillStyle = 'rgba(255,255,255,0.06)'
         ctx.shadowBlur = 0
       }
-      
+
       ctx.fill()
     }
   }
-  
+
   ctx.shadowBlur = 0
-  
+
   // Bottom Stats & Text
   const jan1 = new Date(year, 0, 1)
   const totalDays = (new Date(year + 1, 0, 1) - jan1) / (1000 * 60 * 60 * 24)
   const daysPassed = Math.floor((now - jan1) / (1000 * 60 * 60 * 24))
   const yrDaysLeft = totalDays - daysPassed
   const pctPassed = Math.round((daysPassed / totalDays) * 100)
-  
+
   const bottomAreaY = startY + calendarH + h * 0.03
-  
+
   // 319d left • 13% (Yellow & Green)
   setFont(ctx, '700', w * 0.024, 'system-ui, -apple-system, sans-serif')
-  
+
   ctx.textAlign = 'right'
   ctx.fillStyle = '#fbbf24' // Yellow for days left
   ctx.fillText(`${yrDaysLeft}d left`, w / 2 - w * 0.01, bottomAreaY)
-  
+
   ctx.textAlign = 'left'
   ctx.fillStyle = accent
   ctx.globalAlpha = 0.7
   ctx.fillText(`· ${pctPassed}%`, w / 2 + w * 0.01, bottomAreaY)
   ctx.globalAlpha = 1
-  
+
   // "MAKE IT COUNT" text
   const makeItCountY = h * 0.84
   ctx.textAlign = 'center'
   setFont(ctx, '800', w * 0.045, 'system-ui, -apple-system, sans-serif')
   ctx.fillStyle = accent
   ctx.fillText('MAKE IT COUNT', w / 2, makeItCountY)
-  
+
   // "ONEDOT.TODAY" with red dot
   const urlY = makeItCountY + h * 0.025
   setFont(ctx, '600', w * 0.02, 'system-ui, -apple-system, sans-serif')
-  
+
   const urlText = 'ONEDOT.TODAY'
   const urlWidth = ctx.measureText(urlText).width
   const dotX = w / 2 - urlWidth / 2 - w * 0.025
   const dotY = urlY - w * 0.007
-  
+
   ctx.beginPath()
   ctx.arc(dotX, dotY, w * 0.006, 0, Math.PI * 2)
   ctx.fillStyle = '#ef4444' // Red dot
   ctx.fill()
-  
+
   ctx.fillStyle = 'rgba(255,255,255,0.35)'
   ctx.fillText(urlText, w / 2 + w * 0.012, urlY)
 }
@@ -571,7 +570,7 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
   }
 
   // Subtle vignette
-  const vig = ctx.createRadialGradient(w/2, h/2, h*0.2, w/2, h/2, h*0.85)
+  const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.85)
   vig.addColorStop(0, 'transparent')
   vig.addColorStop(1, 'rgba(0,0,0,0.55)')
   ctx.fillStyle = vig
@@ -599,13 +598,13 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
   const rows = Math.ceil(total / cols)
   const padding = w * 0.06
   const availW = w - padding * 2
-  const gap = isLife ? w * 0.004 : w * 0.018
+  const gap = isLife ? w * 0.003 : w * 0.018
   const boxW = (availW - gap * (cols - 1)) / cols
-  const boxH = isLife ? boxW : w * 0.046
+  const boxH = isLife ? boxW * 0.85 : w * 0.046
   const gapY = isLife ? gap : w * 0.022
   const gridH = rows * boxH + (rows - 1) * gapY
   const ox = padding
-  const oy = h * 0.56 - gridH / 2
+  const oy = (isLife ? h * 0.55 : h * 0.54) - gridH / 2
 
   for (let i = 0; i < total; i++) {
     const col = i % cols
@@ -729,15 +728,77 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
 
   // Title / quote
   ctx.textAlign = 'center'
-  const rawTitleY = oy - h * 0.06
+  const rawTitleY = oy - h * 0.04
   // Ensure title never overlaps the date (at h*0.16) — just below it, not inside the grid
   const titleY = Math.max(rawTitleY, h * 0.19)
   setFont(ctx, '200', w * (isLife ? 0.028 : 0.038))
   ctx.fillStyle = accent + 'cc'
   ctx.fillText(quote.toUpperCase(), w / 2, titleY)
 
+  // ── Legend (lifetime mode only) ─────────────────────────────────
+  if (isLife) {
+    const legendY = titleY + h * 0.025
+    const dotS = w * 0.016
+    const fontSize = w * 0.022
+    const labelGap = w * 0.010
+    const interGap = w * 0.065
+
+    const legendItems = [
+      { label: 'Past', fill: accent, outlined: false },
+      { label: 'Present', fill: '#ffffff', outlined: false },
+      { label: 'Future', fill: 'rgba(255,255,255,0.06)', outlined: true, stroke: 'rgba(255,255,255,0.22)' },
+    ]
+
+    // Approximate total width to centre the group
+    const labelWidths = legendItems.map(it => it.label.length * fontSize * 0.52)
+    const itemWidths = legendItems.map((_, i) => dotS + labelGap + labelWidths[i])
+    const totalLegW = itemWidths.reduce((a, b) => a + b, 0) + interGap * (legendItems.length - 1)
+    let lx = (w - totalLegW) / 2
+
+    setFont(ctx, '300', fontSize)
+    ctx.textAlign = 'left'
+
+    legendItems.forEach((item, i) => {
+      const dotCX = lx + dotS / 2
+      const dotCY = legendY
+
+      ctx.shadowBlur = 0
+      ctx.shadowColor = 'transparent'
+
+      if (item.outlined) {
+        ctx.fillStyle = item.fill
+        if (shape === 'circle') {
+          ctx.beginPath(); ctx.arc(dotCX, dotCY, dotS / 2, 0, Math.PI * 2); ctx.fill()
+        } else {
+          ctx.beginPath(); ctx.roundRect(lx, dotCY - dotS / 2, dotS, dotS, 1); ctx.fill()
+        }
+        ctx.strokeStyle = item.stroke
+        ctx.lineWidth = 0.8
+        if (shape === 'circle') {
+          ctx.beginPath(); ctx.arc(dotCX, dotCY, dotS / 2, 0, Math.PI * 2); ctx.stroke()
+        } else {
+          ctx.beginPath(); ctx.roundRect(lx, dotCY - dotS / 2, dotS, dotS, 1); ctx.stroke()
+        }
+      } else {
+        ctx.fillStyle = item.fill
+        if (shape === 'circle') {
+          ctx.beginPath(); ctx.arc(dotCX, dotCY, dotS / 2, 0, Math.PI * 2); ctx.fill()
+        } else {
+          ctx.beginPath(); ctx.roundRect(lx, dotCY - dotS / 2, dotS, dotS, 1); ctx.fill()
+        }
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.42)'
+      ctx.fillText(item.label, lx + dotS + labelGap, legendY + fontSize * 0.36)
+
+      lx += itemWidths[i] + interGap
+    })
+
+    ctx.textAlign = 'center'
+  }
+
   // Stats below grid
-  const statsY = oy + gridH + h * 0.04
+  const statsY = oy + gridH + h * 0.025
   if (isLife) {
     const age = currentYear - parseInt(birthYear)
     const weeksLeft = total - pastWks
@@ -746,7 +807,7 @@ function drawMementoMori(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     ctx.fillText(`${pastWks.toLocaleString()} weeks lived · ${weeksLeft.toLocaleString()} remaining`, w / 2, statsY)
     setFont(ctx, '200', w * 0.026)
     ctx.fillStyle = 'rgba(255,255,255,0.14)'
-    ctx.fillText(`age ${age} · ${Math.round((pastWks / total) * 100)}% of 90 years`, w / 2, statsY + h * 0.035)
+    ctx.fillText(`age ${age} · ${Math.round((pastWks / total) * 100)}% of 90 years`, w / 2, statsY + h * 0.022)
   } else {
     const goalDate = new Date()
     goalDate.setDate(goalDate.getDate() + daysLeft)
@@ -773,7 +834,7 @@ function drawLifeView(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     ctx.fillRect(0, 0, w, h)
   }
   // vignette
-  const vig = ctx.createRadialGradient(w/2, h/2, h*0.15, w/2, h/2, h*0.9)
+  const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.15, w / 2, h / 2, h * 0.9)
   vig.addColorStop(0, 'transparent')
   vig.addColorStop(1, 'rgba(0,0,0,0.6)')
   ctx.fillStyle = vig
@@ -787,16 +848,16 @@ function drawLifeView(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
   const weeksLived = Math.min(age * 52 + currentWeekOfYear, 90 * 52)
 
   const TOTAL = 90 * 52  // 4680 weeks
-  const COLS  = 52
-  const ROWS  = 90
+  const COLS = 52
+  const ROWS = 90
 
   const padding = w * 0.055
-  const availW  = w - padding * 2
-  const gap     = w * 0.003
-  const boxW    = (availW - gap * (COLS - 1)) / COLS
-  const boxH    = boxW
-  const gapY    = gap
-  const gridH   = ROWS * boxH + (ROWS - 1) * gapY
+  const availW = w - padding * 2
+  const gap = w * 0.003
+  const boxW = (availW - gap * (COLS - 1)) / COLS
+  const boxH = boxW
+  const gapY = gap
+  const gridH = ROWS * boxH + (ROWS - 1) * gapY
 
   // Header area
   const headerH = h * 0.13
@@ -819,9 +880,9 @@ function drawLifeView(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
   for (let i = 0; i < TOTAL; i++) {
     const col = i % COLS
     const row = Math.floor(i / COLS)
-    const x   = ox + col * (boxW + gap)
-    const y   = oy + row * (boxH + gapY)
-    const filled  = i < weeksLived
+    const x = ox + col * (boxW + gap)
+    const y = oy + row * (boxH + gapY)
+    const filled = i < weeksLived
     const isCurrent = i === weeksLived
 
     ctx.fillStyle = filled
@@ -831,7 +892,7 @@ function drawLifeView(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     if (isCurrent) {
       // glow for current week
       ctx.shadowColor = accent
-      ctx.shadowBlur  = 6
+      ctx.shadowBlur = 6
     }
 
     if (dotShape === 'circle') {
@@ -869,18 +930,18 @@ function drawSpecialDates(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     ctx.fillStyle = '#08080f'
     ctx.fillRect(0, 0, w, h)
   }
-  const vig = ctx.createRadialGradient(w/2, h/2, h*0.15, w/2, h/2, h*0.9)
+  const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.15, w / 2, h / 2, h * 0.9)
   vig.addColorStop(0, 'transparent')
   vig.addColorStop(1, 'rgba(0,0,0,0.55)')
   ctx.fillStyle = vig
   ctx.fillRect(0, 0, w, h)
 
-  const now      = new Date()
-  const year     = now.getFullYear()
-  const jan1     = new Date(year, 0, 1)
-  const today    = Math.floor((now - jan1) / (1000 * 60 * 60 * 24))
-  const isLeap   = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
-  const TOTAL    = isLeap ? 366 : 365
+  const now = new Date()
+  const year = now.getFullYear()
+  const jan1 = new Date(year, 0, 1)
+  const today = Math.floor((now - jan1) / (1000 * 60 * 60 * 24))
+  const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+  const TOTAL = isLeap ? 366 : 365
 
   // Convert highlight ranges to a day-index → color map
   const dayColors = {}
@@ -894,18 +955,18 @@ function drawSpecialDates(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
     }
   })
 
-  const COLS    = 25
-  const ROWS    = Math.ceil(TOTAL / COLS)
+  const COLS = 25
+  const ROWS = Math.ceil(TOTAL / COLS)
   const padding = w * 0.06
-  const availW  = w - padding * 2
-  const gap     = w * 0.012
-  const boxW    = (availW - gap * (COLS - 1)) / COLS
-  const boxH    = boxW * 0.82
-  const gapY    = w * 0.01
-  const gridH   = ROWS * boxH + (ROWS - 1) * gapY
+  const availW = w - padding * 2
+  const gap = w * 0.012
+  const boxW = (availW - gap * (COLS - 1)) / COLS
+  const boxH = boxW * 0.82
+  const gapY = w * 0.01
+  const gridH = ROWS * boxH + (ROWS - 1) * gapY
   const headerH = h * 0.14
-  const ox      = padding
-  const oy      = headerH + (h - headerH - gridH) / 2
+  const ox = padding
+  const oy = headerH + (h - headerH - gridH) / 2
 
   ctx.textAlign = 'center'
   setFont(ctx, '200', w * 0.036)
@@ -923,21 +984,21 @@ function drawSpecialDates(ctx, w, h, daysLeft, accent, bgImage, opts = {}) {
   for (let i = 0; i < TOTAL; i++) {
     const col = i % COLS
     const row = Math.floor(i / COLS)
-    const x   = ox + col * (boxW + gap)
-    const y   = oy + row * (boxH + gapY)
+    const x = ox + col * (boxW + gap)
+    const y = oy + row * (boxH + gapY)
 
-    const isToday     = i === today
-    const isPast      = i < today
-    const hlColor     = dayColors[i]
+    const isToday = i === today
+    const isPast = i < today
+    const hlColor = dayColors[i]
 
     if (isToday) {
       ctx.fillStyle = '#ffffff'
       ctx.shadowColor = accent
-      ctx.shadowBlur  = 8
+      ctx.shadowBlur = 8
     } else if (hlColor) {
       ctx.fillStyle = hlColor
       ctx.shadowColor = hlColor
-      ctx.shadowBlur  = 4
+      ctx.shadowBlur = 4
     } else if (isPast) {
       ctx.fillStyle = accent + '55'
       ctx.shadowBlur = 0
@@ -992,8 +1053,8 @@ function drawWeeklyGrid(ctx, w, h, daysLeft, accent, bgImage) {
   ctx.fillRect(0, 0, w, h)
 
   const today = new Date()
-  const dow   = (today.getDay() + 6) % 7 // Mon=0
-  const days  = ['MON','TUE','WED','THU','FRI','SAT','SUN']
+  const dow = (today.getDay() + 6) % 7 // Mon=0
+  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
   const dnums = days.map((_, i) => {
     const d = new Date(today)
     d.setDate(d.getDate() - dow + i)
@@ -1005,13 +1066,13 @@ function drawWeeklyGrid(ctx, w, h, daysLeft, accent, bgImage) {
   ctx.fillStyle = accent + 'aa'
   ctx.fillText('T H I S  W E E K', w / 2, h * 0.41)
 
-  const cw   = w * 0.09, ch = w * 0.115
-  const tot  = 7 * cw
+  const cw = w * 0.09, ch = w * 0.115
+  const tot = 7 * cw
   const gapX = (w - tot) / 8
-  const oy   = h * 0.46
+  const oy = h * 0.46
 
   days.forEach((d, i) => {
-    const x    = gapX + i * (cw + gapX)
+    const x = gapX + i * (cw + gapX)
     const done = i < dow
 
     if (done) {
@@ -1121,51 +1182,51 @@ export function getMementoCurrentWeekPos(canvasW, canvasH, density, birthYear) {
 }
 
 export const DRAW_FUNCTIONS = {
-  'dot-grid':       drawDotGrid,
-  'large-countdown':drawLargeCountdown,
-  'progress-bar':   drawProgressBar,
+  'dot-grid': drawDotGrid,
+  'large-countdown': drawLargeCountdown,
+  'progress-bar': drawProgressBar,
   'quarterly-view': drawQuarterlyView,
-  'yearly-view':    drawYearlyView,
-  'carpe-diem':     drawCarpeDiem,
-  'memento-mori':   drawMementoMori,
-  'weekly-grid':    drawWeeklyGrid,
-  'life-view':      drawLifeView,
-  'special-dates':  drawSpecialDates,
+  'yearly-view': drawYearlyView,
+  'carpe-diem': drawCarpeDiem,
+  'memento-mori': drawMementoMori,
+  'weekly-grid': drawWeeklyGrid,
+  'life-view': drawLifeView,
+  'special-dates': drawSpecialDates,
 }
 
 export default function WallpaperCanvas({ style, targetDate, resolution, backgroundImage, device }) {
   const canvasRef = useRef(null)
-  
+
   // Resolve resolution: use device-provided resolution if 'native'
-  const res = resolution === 'native' && device 
-    ? device.resolution 
+  const res = resolution === 'native' && device
+    ? device.resolution
     : (RESOLUTIONS[resolution] || RESOLUTIONS.iphone)
 
-  const drawFn    = DRAW_FUNCTIONS[style]
-  const accent    = STYLE_ACCENTS[style] || '#a78bfa'
+  const drawFn = DRAW_FUNCTIONS[style]
+  const accent = STYLE_ACCENTS[style] || '#a78bfa'
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas || !drawFn) return
-    canvas.width  = res.w
+    canvas.width = res.w
     canvas.height = res.h
-    const ctx     = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, res.w, res.h)
 
     if (style.includes('http') || style.startsWith('/')) {
-        // This is a bit of a hack to handle cases where we pass a path
-        // Instead let's use the props properly.
+      // This is a bit of a hack to handle cases where we pass a path
+      // Instead let's use the props properly.
     }
 
     if (backgroundImage) {
-        const img = new Image()
-        img.crossOrigin = "anonymous"
-        img.src = backgroundImage
-        img.onload = () => {
-            drawFn(ctx, res.w, res.h, getDaysLeft(targetDate), accent, img)
-        }
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      img.src = backgroundImage
+      img.onload = () => {
+        drawFn(ctx, res.w, res.h, getDaysLeft(targetDate), accent, img)
+      }
     } else {
-        drawFn(ctx, res.w, res.h, getDaysLeft(targetDate), accent)
+      drawFn(ctx, res.w, res.h, getDaysLeft(targetDate), accent)
     }
   }, [style, targetDate, resolution, backgroundImage])
 
