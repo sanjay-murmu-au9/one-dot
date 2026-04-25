@@ -1,0 +1,1 @@
+import{r,_ as l}from"./index-4HiToYGw.js";const i=r("WallpaperPlugin",{web:()=>l(()=>import("./WallpaperPluginWeb-78tCdkgN.js"),[],import.meta.url).then(e=>new e.WallpaperPluginWeb)});export{i as WallpaperPlugin};
