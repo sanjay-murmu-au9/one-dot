@@ -98,11 +98,11 @@ export default function AccountModal({ onClose }) {
   }
 
   function handleUpdateEmail() {
-    alert('Email update coming soon!')
+    setActiveSection('email-update-coming-soon');
   }
 
   function handleUpgrade() {
-    alert('Upgrade feature coming soon!')
+    setActiveSection('upgrade-coming-soon');
   }
 
   return createPortal(
@@ -134,11 +134,10 @@ export default function AccountModal({ onClose }) {
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-0.5 ${
-                  activeSection === item.id
-                    ? 'bg-gray-100 text-[#1d1d1f] font-medium'
-                    : 'text-[#1d1d1f] hover:bg-gray-50'
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-0.5 ${activeSection === item.id
+                  ? 'bg-gray-100 text-[#1d1d1f] font-medium'
+                  : 'text-[#1d1d1f] hover:bg-gray-50'
+                  }`}
               >
                 <item.icon size={18} strokeWidth={1.5} />
                 {item.label}
@@ -151,11 +150,10 @@ export default function AccountModal({ onClose }) {
             {/* Support */}
             <button
               onClick={() => setActiveSection('support')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                activeSection === 'support'
-                  ? 'bg-gray-100 text-[#1d1d1f] font-medium'
-                  : 'text-[#1d1d1f] hover:bg-gray-50'
-              }`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${activeSection === 'support'
+                ? 'bg-gray-100 text-[#1d1d1f] font-medium'
+                : 'text-[#1d1d1f] hover:bg-gray-50'
+                }`}
             >
               <LifeBuoy size={18} strokeWidth={1.5} />
               Support
@@ -188,6 +186,18 @@ export default function AccountModal({ onClose }) {
               resetError={resetError}
               onUpgrade={handleUpgrade}
             />
+          ) : (['upgrade-coming-soon', 'email-update-coming-soon'].includes(activeSection)) ? (
+            <div className="flex flex-col items-center justify-center h-full py-24">
+              <Sparkles size={48} className="text-amber-500 mb-6" />
+              <h2 className="text-2xl font-bold mb-2">This feature is coming soon.</h2>
+              <p className="text-base text-[#6e6e73] mb-6">We're working hard to bring you this upgrade. Stay tuned!</p>
+              <button
+                className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-[#1d1d1f] hover:bg-gray-50 transition-colors"
+                onClick={() => setActiveSection('profile')}
+              >
+                Back to Profile
+              </button>
+            </div>
           ) : (
             <ComingSoonContent section={
               activeSection === 'support' ? 'Support' : navItems.find(n => n.id === activeSection)?.label

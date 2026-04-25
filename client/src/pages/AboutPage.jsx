@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect } from 'react'
+import Typewriter from '../components/Typewriter'
 
 export default function AboutPage() {
   useEffect(() => {
@@ -12,14 +13,26 @@ export default function AboutPage() {
 
         {/* Hero Quote Section */}
         <div className="text-center mb-20">
-          <h1
-            className="display-serif leading-tight"
-            style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#1d1d1f' }}
-          >
-            "Your time is limited, so don't waste it
-            <br />
-            living <span style={{ color: '#ff5f45', fontStyle: 'italic' }}>someone else's</span> life."
-          </h1>
+          <div className="display-serif leading-tight mb-2" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#1d1d1f', minHeight: '4.5em' }}>
+            <Typewriter
+              text={" Your time is limited, so don't waste it\nliving "}
+              speed={32}
+              className="whitespace-pre-line"
+              style={{ color: '#1d1d1f', fontStyle: 'normal', display: 'inline' }}
+            />
+            <Typewriter
+              text={"someone else's"}
+              speed={32}
+              className="whitespace-pre-line"
+              style={{ color: '#ff5f45', fontStyle: 'italic', display: 'inline' }}
+            />
+            <Typewriter
+              text={"  life."}
+              speed={32}
+              className="whitespace-pre-line"
+              style={{ color: '#1d1d1f', fontStyle: 'normal', display: 'inline' }}
+            />
+          </div>
           <p className="mt-6 text-base" style={{ color: '#86868b' }}>
             — Steve Jobs
           </p>

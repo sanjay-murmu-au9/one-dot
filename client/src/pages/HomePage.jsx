@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import Typewriter from '../components/Typewriter'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import PhoneCard, { WALLPAPER_STYLES } from '../components/PhoneCard'
@@ -62,13 +63,13 @@ export default function HomePage() {
   // Helper to get items for the trio (left, center, right)
   const getVisibleItems = () => {
     const len = HERO_ITEMS.length
-    const left   = (activeIndex - 1 + len) % len
+    const left = (activeIndex - 1 + len) % len
     const center = activeIndex % len
-    const right  = (activeIndex + 1) % len
+    const right = (activeIndex + 1) % len
     return [
-      { style: HERO_ITEMS[left],   pos: 'left' },
+      { style: HERO_ITEMS[left], pos: 'left' },
       { style: HERO_ITEMS[center], pos: 'center' },
-      { style: HERO_ITEMS[right],  pos: 'right' },
+      { style: HERO_ITEMS[right], pos: 'right' },
     ]
   }
 
@@ -93,6 +94,7 @@ export default function HomePage() {
           </div>
 
           {/* Main headline */}
+
           <h1
             className="reveal reveal-delay-1 display-serif"
             style={{
@@ -103,9 +105,24 @@ export default function HomePage() {
               letterSpacing: '-0.02em'
             }}
           >
-            Transform your phone into a{' '}
-            <span style={{ color: '#ff5f45' }}>focus tool.</span>
+            <Typewriter
+              text="Transform your phone into a focus tool."
+              speed={45}
+              className=""
+              style={{ color: '#1d1d1f' }}
+            />
           </h1>
+
+          {/* Animated Quote */}
+          <div className="reveal reveal-delay-2 mb-8">
+            <Typewriter
+              text={"Your time is limited, so don't waste it\nliving someone else's life."}
+              speed={32}
+              className="block text-xl md:text-2xl font-medium text-[#6e6e73] whitespace-pre-line"
+              style={{ minHeight: '3.5em' }}
+            />
+          </div>
+
 
           <p
             className="reveal reveal-delay-2 mx-auto text-lg leading-relaxed mb-10"
@@ -130,15 +147,15 @@ export default function HomePage() {
         </div>
 
         {/* Hero dynamic carousel */}
-        <div 
+        <div
           className="reveal reveal-delay-2 relative h-[420px] max-w-5xl mx-auto flex items-center justify-center"
           aria-label="Gallery of dynamic countdown wallpaper styles including Life Grid and Memento Mori"
         >
           <AnimatePresence mode="popLayout">
             {getVisibleItems().map((item, i) => {
               const isCenter = item.pos === 'center'
-              const isLeft   = item.pos === 'left'
-              const isRight  = item.pos === 'right'
+              const isLeft = item.pos === 'left'
+              const isRight = item.pos === 'right'
 
               return (
                 <motion.div
