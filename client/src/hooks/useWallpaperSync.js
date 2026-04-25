@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, drawTimerOverlay } from '../components/WallpaperCanvas';
+import { DRAW_FUNCTIONS, STYLE_ACCENTS, getDaysLeft, drawTimerOverlay, loadHourglassImage } from '../components/WallpaperCanvas';
 
 /**
  * useWallpaperSync - Listens to Firestore for the user's active_wallpaper_config.
@@ -58,12 +58,13 @@ export function useWallpaperSync() {
         canvas.height = h;
         const ctx = canvas.getContext('2d');
 
-        const draw = (img = null) => {
-          drawFn(ctx, w, h, daysLeft, accent, img, memento_options || undefined);
-          
+        const draw = (bgImg = null, hourglassImg = null) => {
+          drawFn(ctx, w, h, daysLeft, accent, bgImg, memento_options || undefined);
+
           // Manually draw the clock overlay on the final wallpaper image
-          drawTimerOverlay(ctx, w, h, (style === 'memento-mori' || style === 'dot-grid') ? accent : '#ffffff');
-          
+          const density = memento_options?.density || '';
+          drawTimerOverlay(ctx, w, h, (style === 'memento-mori' || style === 'dot-grid') ? accent : '#ffffff', hourglassImg, style, density);
+
           const base64 = canvas.toDataURL('image/png');
           const WallpaperPlugin = window.Capacitor.Plugins.WallpaperPlugin;
           console.log('[OneDot] Base64 generated, length:', base64.length);
@@ -77,17 +78,20 @@ export function useWallpaperSync() {
           }
         };
 
-        if (config.backgroundImage) {
-          let bgSrc = config.backgroundImage;
-          if (isNative && bgSrc.startsWith('/one-dot/')) bgSrc = bgSrc.replace('/one-dot/', '/');
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = bgSrc;
-          img.onload = () => draw(img);
-          img.onerror = () => draw(null);
-        } else {
-          draw(null);
-        }
+        // Load hourglass image first, then handle background image
+        loadHourglassImage().then(hourglassImg => {
+          if (config.backgroundImage) {
+            let bgSrc = config.backgroundImage;
+            if (isNative && bgSrc.startsWith('/one-dot/')) bgSrc = bgSrc.replace('/one-dot/', '/');
+            const bgImg = new Image();
+            bgImg.crossOrigin = 'anonymous';
+            bgImg.src = bgSrc;
+            bgImg.onload = () => draw(bgImg, hourglassImg);
+            bgImg.onerror = () => draw(null, hourglassImg);
+          } else {
+            draw(null, hourglassImg);
+          }
+        });
       };
 
       // 1. Initial render/sync on config change

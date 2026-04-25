@@ -57,12 +57,29 @@ public class WallpaperPlugin extends Plugin {
                 wm.setBitmap(decodedByte, null, true, WallpaperManager.FLAG_LOCK);
             }
 
+            // Free native memory — wallpaper bitmaps can be ~11 MB uncompressed
+            decodedByte.recycle();
+
             JSObject ret = new JSObject();
             ret.put("success", true);
             call.resolve(ret);
         } catch (Exception e) {
             call.reject("Failed to set wallpaper: " + e.getLocalizedMessage());
         }
+    }
+
+    /**
+     * Trigger wallpaper update immediately (for testing)
+     */
+    @PluginMethod
+    public void triggerNow(PluginCall call) {
+        androidx.work.OneTimeWorkRequest testRequest =
+            new androidx.work.OneTimeWorkRequest.Builder(DailyWallpaperWorker.class).build();
+        WorkManager.getInstance(getContext()).enqueue(testRequest);
+        JSObject ret = new JSObject();
+        ret.put("success", true);
+        ret.put("message", "Wallpaper refresh triggered. Check lock screen in a few seconds.");
+        call.resolve(ret);
     }
 
     /**
@@ -134,11 +151,12 @@ public class WallpaperPlugin extends Plugin {
             .setConstraints(constraints)
             .build();
 
-        // Schedule work (replace existing if any)
+        // Schedule work — UPDATE keeps the existing schedule if unchanged,
+        // avoiding unnecessary restarts (REPLACE was deprecated in WorkManager 2.8)
         WorkManager.getInstance(getContext())
             .enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.REPLACE,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 dailyWorkRequest
             );
     }

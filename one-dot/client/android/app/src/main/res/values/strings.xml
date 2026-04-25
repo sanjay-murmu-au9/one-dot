@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">One-Dot</string>
-    <string name="title_activity_main">One-Dot</string>
-    <string name="package_name">com.sanjayamurmu.onedot</string>
-    <string name="custom_url_scheme">com.sanjayamurmu.onedot</string>
-</resources>

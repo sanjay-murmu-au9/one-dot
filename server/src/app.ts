@@ -3,16 +3,29 @@ import cors from 'cors';
 import { errorHandler } from './middlewares/error.middleware';
 import healthRoutes from './routes/health.routes';
 import wallpaperRoutes from './routes/wallpaper.routes';
+import authRoutes from './routes/auth.routes';
 
 const app: Application = express();
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4173'] }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://sanjay-murmu-au9.github.io',
+    'capacitor://localhost',
+    'http://localhost',
+    'ionic://localhost',
+    'http://localhost:8100'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Main App Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/wallpaper', wallpaperRoutes);
+app.use('/api/auth', authRoutes);
 
 // For backwards compatibility during transition or direct root hits
 app.use('/health', healthRoutes);

@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Load keystore credentials from keystore.properties (never commit that file)
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.sanjayamurmu.onedot"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,6 +23,16 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     // Java version set after capacitor.build.gradle to override Capacitor defaults
     // See below after 'apply from: capacitor.build.gradle'
     buildTypes {
@@ -23,7 +40,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // signingConfig signingConfigs.release
+            signingConfig signingConfigs.release
         }
     }
 }

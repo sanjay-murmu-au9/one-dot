@@ -1,7 +1,7 @@
-<!-- # Project Context: one dot
+`<!-- # Project Context: one dot
 
 ## 🕰️ Core Philosophy: The Reminder
-The core idea of **one dot** is to serve as a constant visceral reminder that **we have limited time.** 
+The core idea of **one dot** is to serve as a constant visceral reminder that **we have limited time.**
 Life is a non-renewable resource. By visualizing this finitude directly on the most-viewed screen in our lives (the phone lock screen), we encourage users to:
 1. Stop procrastinating on their deepest goals.
 2. Realize the weight of every passing week.
