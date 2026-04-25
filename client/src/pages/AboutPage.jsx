@@ -15,7 +15,7 @@ export default function AboutPage() {
         <div className="text-center mb-20">
           <div className="display-serif leading-tight mb-2" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#1d1d1f', minHeight: '4.5em' }}>
             <Typewriter
-              text={" Your time is limited, so don't waste it\nliving "}
+              text={"  Your time is limited, so don't waste it\nliving "}
               speed={32}
               className="whitespace-pre-line"
               style={{ color: '#1d1d1f', fontStyle: 'normal', display: 'inline' }}

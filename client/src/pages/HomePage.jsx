@@ -116,7 +116,7 @@ export default function HomePage() {
           {/* Animated Quote */}
           <div className="reveal reveal-delay-2 mb-8">
             <Typewriter
-              text={"Your time is limited, so don't waste it\nliving someone else's life."}
+              text={"  Your time is limited, so don't waste it\nliving someone else's life."}
               speed={32}
               className="block text-xl md:text-2xl font-medium text-[#6e6e73] whitespace-pre-line"
               style={{ minHeight: '3.5em' }}
