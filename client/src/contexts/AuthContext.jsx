@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
       const token = await currentUser.getIdToken();
 
       // Call backend API to delete account
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://one-dot.onrender.com';
       console.log('[DeleteAccount] Using API URL:', apiBaseUrl);
       console.log('[DeleteAccount] Full endpoint:', `${apiBaseUrl}/api/auth/delete-account`);
 
