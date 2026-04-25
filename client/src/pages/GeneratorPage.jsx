@@ -383,8 +383,8 @@ export default function GeneratorPage() {
           <div className="lg:hidden w-full flex flex-col items-center gap-1 py-4 px-6">
             <div className="relative">
               {/* Subtle shadow glow behind phone */}
-              <div 
-                className="absolute inset-0 blur-[60px] opacity-20" 
+              <div
+                className="absolute inset-0 blur-[60px] opacity-20"
                 style={{ background: activeAccent, transform: 'scale(1.5)' }}
               />
               <div
@@ -886,6 +886,7 @@ export default function GeneratorPage() {
                           onClick={async () => {
                             setAutoUpdateToggling(true)
                             const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/api/wallpaper/u/${currentUser.uid}/daily.png`
+                            console.log(import.meta.env.VITE_API_BASE_URL,"apiUrl:::::::::", apiUrl)
                             const result = autoUpdate.isEnabled
                               ? await autoUpdate.disableAutoUpdate()
                               : await autoUpdate.enableAutoUpdate(apiUrl)
@@ -1024,8 +1025,8 @@ export default function GeneratorPage() {
 
             <div className="relative">
                {/* Subtle shadow glow behind phone */}
-               <div 
-                className="absolute inset-0 blur-3xl opacity-15" 
+               <div
+                className="absolute inset-0 blur-3xl opacity-15"
                 style={{ background: activeAccent, transform: 'scale(1.3)' }}
               />
               {/* Device frame preview */}
